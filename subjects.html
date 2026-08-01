@@ -129,20 +129,6 @@
             to { transform: scale(1); opacity: 1; }
         }
         
-        .grade-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            display: inline-block;
-            background: #DBEAFE;
-            color: #2563EB;
-        }
-        .dark .grade-badge {
-            background: #1E3A5F;
-            color: #60A5FA;
-        }
-        
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -395,22 +381,26 @@
         console.log('✅ Supabase client initialized');
 
         // ============================================
-        // GRADES DATA - With UUIDs
+        // GRADES DATA - Complete list with proper UUIDs
+        // Grade 1-12 and Form 1-4
         // ============================================
         const GRADES_DATA = [
-            { id: '11111111-1111-1111-1111-111111111111', name: 'Grade 1', code: 'G1', sort_order: 1 },
-            { id: '22222222-2222-2222-2222-222222222222', name: 'Grade 2', code: 'G2', sort_order: 2 },
-            { id: '33333333-3333-3333-3333-333333333333', name: 'Grade 3', code: 'G3', sort_order: 3 },
-            { id: '44444444-4444-4444-4444-444444444444', name: 'Grade 4', code: 'G4', sort_order: 4 },
-            { id: '55555555-5555-5555-5555-555555555555', name: 'Grade 5', code: 'G5', sort_order: 5 },
-            { id: '66666666-6666-6666-6666-666666666666', name: 'Grade 6', code: 'G6', sort_order: 6 },
-            { id: '77777777-7777-7777-7777-777777777777', name: 'Grade 7', code: 'G7', sort_order: 7 },
-            { id: '88888888-8888-8888-8888-888888888888', name: 'Grade 8', code: 'G8', sort_order: 8 },
-            { id: '99999999-9999-9999-9999-999999999999', name: 'Grade 9', code: 'G9', sort_order: 9 },
-            { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', name: 'Form 1', code: 'F1', sort_order: 10 },
-            { id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', name: 'Form 2', code: 'F2', sort_order: 11 },
-            { id: 'cccccccc-cccc-cccc-cccc-cccccccccccc', name: 'Form 3', code: 'F3', sort_order: 12 },
-            { id: 'dddddddd-dddd-dddd-dddd-dddddddddddd', name: 'Form 4', code: 'F4', sort_order: 13 }
+            { id: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d', name: 'Grade 1', code: 'G1', sort_order: 1 },
+            { id: 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e', name: 'Grade 2', code: 'G2', sort_order: 2 },
+            { id: 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f', name: 'Grade 3', code: 'G3', sort_order: 3 },
+            { id: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a', name: 'Grade 4', code: 'G4', sort_order: 4 },
+            { id: 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b', name: 'Grade 5', code: 'G5', sort_order: 5 },
+            { id: 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c', name: 'Grade 6', code: 'G6', sort_order: 6 },
+            { id: 'a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d', name: 'Grade 7', code: 'G7', sort_order: 7 },
+            { id: 'b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e', name: 'Grade 8', code: 'G8', sort_order: 8 },
+            { id: 'c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f', name: 'Grade 9', code: 'G9', sort_order: 9 },
+            { id: 'd0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a', name: 'Grade 10', code: 'G10', sort_order: 10 },
+            { id: 'e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b', name: 'Grade 11', code: 'G11', sort_order: 11 },
+            { id: 'f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c', name: 'Grade 12', code: 'G12', sort_order: 12 },
+            { id: 'a3b4c5d6-e7f8-4a9b-0c1d-2e3f4a5b6c7d', name: 'Form 1', code: 'F1', sort_order: 13 },
+            { id: 'b4c5d6e7-f8a9-4b0c-1d2e-3f4a5b6c7d8e', name: 'Form 2', code: 'F2', sort_order: 14 },
+            { id: 'c5d6e7f8-a9b0-4c1d-2e3f-4a5b6c7d8e9f', name: 'Form 3', code: 'F3', sort_order: 15 },
+            { id: 'd6e7f8a9-b0c1-4d2e-3f4a-5b6c7d8e9f0a', name: 'Form 4', code: 'F4', sort_order: 16 }
         ];
 
         // ============================================
@@ -562,17 +552,6 @@
         }
 
         // ============================================
-        // GENERATE UUID
-        // ============================================
-        function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
-        // ============================================
         // LOAD DATA
         // ============================================
         async function loadData() {
@@ -589,44 +568,56 @@
         }
 
         // ============================================
-        // LOAD GRADES - Use predefined with UUIDs
+        // LOAD GRADES - Seed if empty
         // ============================================
         async function loadGrades() {
             try {
-                // Try to fetch from database first
+                // First, try to fetch grades from database
                 const { data, error } = await supabaseClient
                     .from('grades')
                     .select('*')
                     .order('sort_order', { ascending: true });
                 
-                if (error || !data || data.length === 0) {
-                    console.log('No grades in DB, seeding predefined grades');
+                if (error) {
+                    console.error('Error fetching grades:', error);
+                    // Use predefined grades
+                    grades = GRADES_DATA;
+                    populateGradeDropdowns();
+                    return grades;
+                }
+                
+                if (!data || data.length === 0) {
+                    console.log('No grades in database, seeding all grades...');
                     
-                    // Seed grades with UUIDs
+                    // Insert all grades
                     for (const grade of GRADES_DATA) {
                         const { error: insertError } = await supabaseClient
                             .from('grades')
-                            .upsert({
+                            .insert({
                                 id: grade.id,
                                 name: grade.name,
                                 code: grade.code,
                                 sort_order: grade.sort_order,
                                 is_active: true
-                            }, { onConflict: 'id' });
+                            });
                         
                         if (insertError) {
-                            console.error('Error seeding grade:', insertError);
+                            console.error('Error inserting grade:', insertError);
                         }
                     }
                     
-                    // Fetch the seeded grades
+                    // Fetch the inserted grades
                     const { data: seededData, error: fetchError } = await supabaseClient
                         .from('grades')
                         .select('*')
                         .order('sort_order', { ascending: true });
                     
-                    if (fetchError) throw fetchError;
-                    grades = seededData || GRADES_DATA;
+                    if (fetchError) {
+                        console.error('Error fetching seeded grades:', fetchError);
+                        grades = GRADES_DATA;
+                    } else {
+                        grades = seededData || GRADES_DATA;
+                    }
                 } else {
                     grades = data;
                 }
@@ -635,8 +626,7 @@
                 populateGradeDropdowns();
                 return grades;
             } catch (error) {
-                console.error('Error loading grades:', error);
-                // Fallback to predefined
+                console.error('Error in loadGrades:', error);
                 grades = GRADES_DATA;
                 populateGradeDropdowns();
                 return grades;
@@ -651,11 +641,15 @@
             
             selectors.forEach(selectorId => {
                 const select = document.getElementById(selectorId);
-                if (!select) return;
+                if (!select) {
+                    console.warn('Select element not found:', selectorId);
+                    return;
+                }
                 
                 // Clear existing options (keep first option if it's placeholder)
-                const options = select.querySelectorAll('option:not([value=""])');
-                options.forEach(opt => opt.remove());
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
                 
                 // Add grade options
                 grades.forEach(grade => {
