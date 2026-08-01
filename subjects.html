@@ -51,8 +51,6 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             border-left: 4px solid #2563EB;
-            position: relative;
-            overflow: hidden;
         }
         .subject-card:hover {
             transform: translateY(-4px);
@@ -160,6 +158,11 @@
         .form-error-message.show {
             display: block;
         }
+        
+        /* Scrollable dropdown for grades */
+        select option {
+            padding: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -217,7 +220,7 @@
                     <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">My Subjects</h1>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Subjects</h1>
                 </div>
                 
                 <div class="flex-1 max-w-xl mx-4">
@@ -339,7 +342,7 @@
                         </label>
                         <select id="subject-grade" required 
                                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            <option value="">Select Grade</option>
+                            <option value="">-- Select Grade --</option>
                             <!-- Grades will be populated here -->
                         </select>
                         <div class="form-error-message" id="subject-grade-error">Please select a grade</div>
@@ -379,29 +382,6 @@
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('✅ Supabase client initialized');
-
-        // ============================================
-        // GRADES DATA - Complete list with proper UUIDs
-        // Grade 1-12 and Form 1-4
-        // ============================================
-        const GRADES_DATA = [
-            { id: 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d', name: 'Grade 1', code: 'G1', sort_order: 1 },
-            { id: 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e', name: 'Grade 2', code: 'G2', sort_order: 2 },
-            { id: 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f', name: 'Grade 3', code: 'G3', sort_order: 3 },
-            { id: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a', name: 'Grade 4', code: 'G4', sort_order: 4 },
-            { id: 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b', name: 'Grade 5', code: 'G5', sort_order: 5 },
-            { id: 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c', name: 'Grade 6', code: 'G6', sort_order: 6 },
-            { id: 'a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d', name: 'Grade 7', code: 'G7', sort_order: 7 },
-            { id: 'b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e', name: 'Grade 8', code: 'G8', sort_order: 8 },
-            { id: 'c9d0e1f2-a3b4-4c5d-6e7f-8a9b0c1d2e3f', name: 'Grade 9', code: 'G9', sort_order: 9 },
-            { id: 'd0e1f2a3-b4c5-4d6e-7f8a-9b0c1d2e3f4a', name: 'Grade 10', code: 'G10', sort_order: 10 },
-            { id: 'e1f2a3b4-c5d6-4e7f-8a9b-0c1d2e3f4a5b', name: 'Grade 11', code: 'G11', sort_order: 11 },
-            { id: 'f2a3b4c5-d6e7-4f8a-9b0c-1d2e3f4a5b6c', name: 'Grade 12', code: 'G12', sort_order: 12 },
-            { id: 'a3b4c5d6-e7f8-4a9b-0c1d-2e3f4a5b6c7d', name: 'Form 1', code: 'F1', sort_order: 13 },
-            { id: 'b4c5d6e7-f8a9-4b0c-1d2e-3f4a5b6c7d8e', name: 'Form 2', code: 'F2', sort_order: 14 },
-            { id: 'c5d6e7f8-a9b0-4c1d-2e3f-4a5b6c7d8e9f', name: 'Form 3', code: 'F3', sort_order: 15 },
-            { id: 'd6e7f8a9-b0c1-4d2e-3f4a-5b6c7d8e9f0a', name: 'Form 4', code: 'F4', sort_order: 16 }
-        ];
 
         // ============================================
         // STATE
@@ -568,11 +548,10 @@
         }
 
         // ============================================
-        // LOAD GRADES - Seed if empty
+        // LOAD GRADES - Fetch from database
         // ============================================
         async function loadGrades() {
             try {
-                // First, try to fetch grades from database
                 const { data, error } = await supabaseClient
                     .from('grades')
                     .select('*')
@@ -580,56 +559,26 @@
                 
                 if (error) {
                     console.error('Error fetching grades:', error);
-                    // Use predefined grades
-                    grades = GRADES_DATA;
-                    populateGradeDropdowns();
-                    return grades;
+                    showToast('Error loading grades. Please ensure the grades table exists.', 'error');
+                    grades = [];
+                    return [];
                 }
                 
                 if (!data || data.length === 0) {
-                    console.log('No grades in database, seeding all grades...');
-                    
-                    // Insert all grades
-                    for (const grade of GRADES_DATA) {
-                        const { error: insertError } = await supabaseClient
-                            .from('grades')
-                            .insert({
-                                id: grade.id,
-                                name: grade.name,
-                                code: grade.code,
-                                sort_order: grade.sort_order,
-                                is_active: true
-                            });
-                        
-                        if (insertError) {
-                            console.error('Error inserting grade:', insertError);
-                        }
-                    }
-                    
-                    // Fetch the inserted grades
-                    const { data: seededData, error: fetchError } = await supabaseClient
-                        .from('grades')
-                        .select('*')
-                        .order('sort_order', { ascending: true });
-                    
-                    if (fetchError) {
-                        console.error('Error fetching seeded grades:', fetchError);
-                        grades = GRADES_DATA;
-                    } else {
-                        grades = seededData || GRADES_DATA;
-                    }
-                } else {
-                    grades = data;
+                    console.warn('No grades found in database. Please run the schema SQL first.');
+                    showToast('No grades found. Please run the database schema first.', 'warning');
+                    grades = [];
+                    return [];
                 }
                 
+                grades = data;
                 console.log('📚 Grades loaded:', grades.length);
                 populateGradeDropdowns();
                 return grades;
             } catch (error) {
                 console.error('Error in loadGrades:', error);
-                grades = GRADES_DATA;
-                populateGradeDropdowns();
-                return grades;
+                grades = [];
+                return [];
             }
         }
 
