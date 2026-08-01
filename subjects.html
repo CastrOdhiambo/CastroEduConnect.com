@@ -159,9 +159,19 @@
             display: block;
         }
         
-        /* Scrollable dropdown for grades */
-        select option {
-            padding: 8px;
+        .enroll-btn {
+            transition: all 0.3s ease;
+        }
+        .enroll-btn:hover {
+            transform: scale(1.05);
+        }
+        .enrolled-badge {
+            background: #D1FAE5;
+            color: #059669;
+        }
+        .dark .enrolled-badge {
+            background: #065F46;
+            color: #34D399;
         }
     </style>
 </head>
@@ -263,9 +273,8 @@
                     </select>
                     <select id="filter-status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="completed">Completed</option>
-                        <option value="dropped">Dropped</option>
+                        <option value="active">Enrolled</option>
+                        <option value="available">Available</option>
                     </select>
                 </div>
                 <button id="add-subject-btn" onclick="openAddSubjectModal()" 
@@ -343,7 +352,6 @@
                         <select id="subject-grade" required 
                                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                             <option value="">-- Select Grade --</option>
-                            <!-- Grades will be populated here -->
                         </select>
                         <div class="form-error-message" id="subject-grade-error">Please select a grade</div>
                     </div>
@@ -548,7 +556,7 @@
         }
 
         // ============================================
-        // LOAD GRADES - Fetch from database
+        // LOAD GRADES
         // ============================================
         async function loadGrades() {
             try {
@@ -559,19 +567,11 @@
                 
                 if (error) {
                     console.error('Error fetching grades:', error);
-                    showToast('Error loading grades. Please ensure the grades table exists.', 'error');
                     grades = [];
                     return [];
                 }
                 
-                if (!data || data.length === 0) {
-                    console.warn('No grades found in database. Please run the schema SQL first.');
-                    showToast('No grades found. Please run the database schema first.', 'warning');
-                    grades = [];
-                    return [];
-                }
-                
-                grades = data;
+                grades = data || [];
                 console.log('📚 Grades loaded:', grades.length);
                 populateGradeDropdowns();
                 return grades;
@@ -590,17 +590,12 @@
             
             selectors.forEach(selectorId => {
                 const select = document.getElementById(selectorId);
-                if (!select) {
-                    console.warn('Select element not found:', selectorId);
-                    return;
-                }
+                if (!select) return;
                 
-                // Clear existing options (keep first option if it's placeholder)
                 while (select.options.length > 1) {
                     select.remove(1);
                 }
                 
-                // Add grade options
                 grades.forEach(grade => {
                     const option = document.createElement('option');
                     option.value = grade.id;
@@ -611,7 +606,7 @@
         }
 
         // ============================================
-        // LOAD SUBJECTS
+        // LOAD SUBJECTS - ALL SUBJECTS FOR LEARNERS
         // ============================================
         async function loadSubjects() {
             try {
@@ -621,26 +616,15 @@
                         *,
                         grades (id, name, code),
                         profiles (id, first_name, last_name)
-                    `);
+                    `)
+                    .eq('is_active', true);
                 
-                // If learner, only show enrolled subjects
-                if (userRole === 'learner') {
-                    const { data: enrolls, error: enrollError } = await supabaseClient
-                        .from('subject_enrollments')
-                        .select('subject_id')
-                        .eq('learner_id', currentUser.id)
-                        .eq('status', 'active');
-                    
-                    if (enrollError) throw enrollError;
-                    
-                    const subjectIds = enrolls?.map(e => e.subject_id) || [];
-                    if (subjectIds.length > 0) {
-                        query = query.in('id', subjectIds);
-                    } else {
-                        subjects = [];
-                        return;
-                    }
+                // For teachers, only show their assigned subjects
+                if (userRole === 'teacher') {
+                    query = query.eq('teacher_id', currentUser.id);
                 }
+                // For learners, show ALL available subjects
+                // No filter - learners see all subjects
                 
                 const { data, error } = await query;
                 
@@ -656,10 +640,16 @@
         }
 
         // ============================================
-        // LOAD ENROLLMENTS
+        // LOAD ENROLLMENTS - Only for learners
         // ============================================
         async function loadEnrollments() {
             try {
+                // Only learners have enrollments
+                if (userRole !== 'learner') {
+                    enrollments = [];
+                    return [];
+                }
+                
                 const { data, error } = await supabaseClient
                     .from('subject_enrollments')
                     .select('*')
@@ -667,11 +657,70 @@
                 
                 if (error) throw error;
                 enrollments = data || [];
+                console.log('📋 Enrollments loaded:', enrollments.length);
                 return enrollments;
             } catch (error) {
                 console.error('Error loading enrollments:', error);
                 enrollments = [];
                 return [];
+            }
+        }
+
+        // ============================================
+        // ENROLL IN SUBJECT
+        // ============================================
+        async function enrollSubject(subjectId) {
+            try {
+                // Check if already enrolled
+                const existing = enrollments.find(e => e.subject_id === subjectId);
+                if (existing) {
+                    showToast('You are already enrolled in this subject', 'warning');
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
+                    .from('subject_enrollments')
+                    .insert([{
+                        subject_id: subjectId,
+                        learner_id: currentUser.id,
+                        status: 'active'
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                showToast('🎉 Successfully enrolled in subject!', 'success');
+                await loadEnrollments();
+                applyFilters();
+                
+            } catch (error) {
+                console.error('Error enrolling:', error);
+                showToast('Error enrolling: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // DROP SUBJECT
+        // ============================================
+        async function dropSubject(subjectId) {
+            if (!confirm('Are you sure you want to drop this subject?')) return;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('subject_enrollments')
+                    .delete()
+                    .eq('subject_id', subjectId)
+                    .eq('learner_id', currentUser.id);
+                
+                if (error) throw error;
+                
+                showToast('Subject dropped successfully', 'info');
+                await loadEnrollments();
+                applyFilters();
+                
+            } catch (error) {
+                console.error('Error dropping subject:', error);
+                showToast('Error dropping subject: ' + error.message, 'error');
             }
         }
 
@@ -700,11 +749,12 @@
                 filteredSubjects = filteredSubjects.filter(s => s.grade_id === gradeFilter);
             }
             
-            if (statusFilter) {
+            if (statusFilter && userRole === 'learner') {
                 filteredSubjects = filteredSubjects.filter(s => {
-                    const enrollment = enrollments.find(e => e.subject_id === s.id);
-                    const status = enrollment?.status || 'not_enrolled';
-                    return status === statusFilter;
+                    const isEnrolled = enrollments.some(e => e.subject_id === s.id);
+                    if (statusFilter === 'active') return isEnrolled;
+                    if (statusFilter === 'available') return !isEnrolled;
+                    return true;
                 });
             }
             
@@ -731,7 +781,7 @@
                         <i class="fas fa-book-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
                         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">No Subjects Found</h3>
                         <p class="text-gray-500 dark:text-gray-400 mt-2">
-                            ${userRole === 'learner' ? 'You are not enrolled in any subjects yet.' : 'No subjects have been created yet.'}
+                            ${userRole === 'learner' ? 'No subjects available. Check back later!' : 'You haven\'t created any subjects yet.'}
                         </p>
                         ${userRole !== 'learner' ? `
                             <button onclick="openAddSubjectModal()" class="mt-4 btn-primary px-6 py-2 rounded-xl text-white font-semibold">
@@ -751,21 +801,8 @@
                     ? `${teacher.first_name} ${teacher.last_name}`
                     : 'No teacher assigned';
                 
-                // Find enrollment status
-                const enrollment = enrollments.find(e => e.subject_id === subject.id);
-                const status = enrollment?.status || 'not_enrolled';
-                const statusColors = {
-                    'active': 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-                    'completed': 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-                    'dropped': 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
-                    'not_enrolled': 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                };
-                const statusLabels = {
-                    'active': 'Active',
-                    'completed': 'Completed',
-                    'dropped': 'Dropped',
-                    'not_enrolled': 'Not Enrolled'
-                };
+                // Check if learner is enrolled
+                const isEnrolled = enrollments.some(e => e.subject_id === subject.id);
                 
                 return `
                     <div class="subject-card" style="border-left-color: ${subject.color || '#2563EB'}">
@@ -780,9 +817,15 @@
                                     <p class="text-sm text-gray-500 dark:text-gray-400">${subject.code}</p>
                                 </div>
                             </div>
-                            <span class="text-xs px-3 py-1 rounded-full ${statusColors[status]}">
-                                ${statusLabels[status]}
-                            </span>
+                            ${userRole === 'learner' ? `
+                                <span class="text-xs px-3 py-1 rounded-full ${isEnrolled ? 'enrolled-badge' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}">
+                                    ${isEnrolled ? '✅ Enrolled' : '📖 Available'}
+                                </span>
+                            ` : `
+                                <span class="text-xs px-3 py-1 rounded-full ${subject.is_active ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}">
+                                    ${subject.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            `}
                         </div>
                         
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${subject.description || 'No description available'}</p>
@@ -797,7 +840,20 @@
                                     class="flex-1 py-2 border border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition font-medium text-sm">
                                 <i class="fas fa-eye mr-1"></i> View
                             </button>
-                            ${userRole !== 'learner' ? `
+                            
+                            ${userRole === 'learner' ? `
+                                ${!isEnrolled ? `
+                                    <button onclick="enrollSubject('${subject.id}')" 
+                                            class="flex-1 py-2 btn-primary rounded-xl text-white font-medium text-sm enroll-btn">
+                                        <i class="fas fa-plus mr-1"></i> Enroll
+                                    </button>
+                                ` : `
+                                    <button onclick="dropSubject('${subject.id}')" 
+                                            class="flex-1 py-2 border border-red-500 text-red-500 dark:border-red-400 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition font-medium text-sm">
+                                        <i class="fas fa-times mr-1"></i> Drop
+                                    </button>
+                                `}
+                            ` : `
                                 <button onclick="editSubject('${subject.id}')" 
                                         class="flex-1 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition font-medium text-sm">
                                     <i class="fas fa-edit mr-1"></i> Edit
@@ -806,7 +862,7 @@
                                         class="py-2 px-3 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition font-medium text-sm">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            ` : ''}
+                            `}
                         </div>
                     </div>
                 `;
@@ -825,6 +881,7 @@
             
             const grade = subject.grades;
             const teacher = subject.profiles;
+            const isEnrolled = enrollments.some(e => e.subject_id === subjectId);
             
             const details = `
                 <div class="space-y-4">
@@ -849,12 +906,14 @@
                             <p class="font-medium text-gray-900 dark:text-white">${teacher?.first_name || 'N/A'} ${teacher?.last_name || ''}</p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Color</p>
-                            <div class="w-8 h-8 rounded-full" style="background: ${subject.color || '#2563EB'}"></div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                            <p class="font-medium text-gray-900 dark:text-white">
+                                ${userRole === 'learner' ? (isEnrolled ? '✅ Enrolled' : '📖 Available') : (subject.is_active ? 'Active' : 'Inactive')}
+                            </p>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                            <p class="font-medium text-gray-900 dark:text-white">${subject.is_active ? 'Active' : 'Inactive'}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Color</p>
+                            <div class="w-8 h-8 rounded-full" style="background: ${subject.color || '#2563EB'}"></div>
                         </div>
                     </div>
                     
@@ -865,13 +924,31 @@
                         </div>
                     ` : ''}
                     
-                    <button onclick="closeModal()" class="w-full btn-primary py-2 rounded-xl text-white font-semibold">
-                        Close
-                    </button>
+                    ${userRole === 'learner' ? `
+                        <div class="flex gap-3">
+                            ${!isEnrolled ? `
+                                <button onclick="enrollSubject('${subject.id}'); closeModal();" 
+                                        class="flex-1 btn-primary py-2 rounded-xl text-white font-semibold">
+                                    <i class="fas fa-plus mr-2"></i> Enroll in Subject
+                                </button>
+                            ` : `
+                                <button onclick="dropSubject('${subject.id}'); closeModal();" 
+                                        class="flex-1 py-2 border border-red-500 text-red-500 rounded-xl hover:bg-red-50 transition font-semibold">
+                                    <i class="fas fa-times mr-2"></i> Drop Subject
+                                </button>
+                            `}
+                            <button onclick="closeModal()" class="flex-1 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition font-semibold">
+                                Close
+                            </button>
+                        </div>
+                    ` : `
+                        <button onclick="closeModal()" class="w-full btn-primary py-2 rounded-xl text-white font-semibold">
+                            Close
+                        </button>
+                    `}
                 </div>
             `;
             
-            // Show in modal
             document.getElementById('modal-title').textContent = 'Subject Details';
             document.getElementById('subject-form').style.display = 'none';
             const modalBody = document.createElement('div');
@@ -890,7 +967,6 @@
                 return;
             }
             
-            // Reset form
             document.getElementById('modal-title').textContent = 'Add New Subject';
             document.getElementById('edit-subject-id').value = '';
             document.getElementById('subject-name').value = '';
@@ -900,12 +976,10 @@
             document.getElementById('subject-grade').value = '';
             document.getElementById('save-subject-btn').innerHTML = '<i class="fas fa-save mr-2"></i> Save Subject';
             
-            // Remove any existing modal body
             const existingBody = document.getElementById('modal-body');
             if (existingBody) existingBody.remove();
             document.getElementById('subject-form').style.display = 'block';
             
-            // Clear errors
             document.querySelectorAll('.form-error-message.show').forEach(el => el.classList.remove('show'));
             document.querySelectorAll('.form-input-error').forEach(el => el.classList.remove('form-input-error'));
             
@@ -927,7 +1001,6 @@
                 return;
             }
             
-            // Remove any existing modal body
             const existingBody = document.getElementById('modal-body');
             if (existingBody) existingBody.remove();
             document.getElementById('subject-form').style.display = 'block';
@@ -949,7 +1022,6 @@
         // ============================================
         function closeModal() {
             document.getElementById('subject-modal').classList.remove('active');
-            // Clean up
             const existingBody = document.getElementById('modal-body');
             if (existingBody) existingBody.remove();
             document.getElementById('subject-form').style.display = 'block';
@@ -968,7 +1040,6 @@
             const gradeId = document.getElementById('subject-grade').value;
             const color = document.getElementById('subject-color').value;
             
-            // Reset errors
             document.querySelectorAll('.form-error-message.show').forEach(el => el.classList.remove('show'));
             document.querySelectorAll('.form-input-error').forEach(el => el.classList.remove('form-input-error'));
             
@@ -1012,10 +1083,7 @@
                     is_active: true
                 };
                 
-                let result;
-                
                 if (editId) {
-                    // Update existing subject
                     const { data, error } = await supabaseClient
                         .from('subjects')
                         .update(subjectData)
@@ -1023,17 +1091,14 @@
                         .select();
                     
                     if (error) throw error;
-                    result = data;
                     showToast('Subject updated successfully! ✅', 'success');
                 } else {
-                    // Create new subject
                     const { data, error } = await supabaseClient
                         .from('subjects')
                         .insert([subjectData])
                         .select();
                     
                     if (error) throw error;
-                    result = data;
                     showToast('Subject created successfully! 🎉', 'success');
                 }
                 
@@ -1158,13 +1223,9 @@
         (async function init() {
             console.log('🚀 CastroEduConnect Subjects Page Loading...');
             
-            // Init dark mode
             initDarkMode();
-            
-            // Setup dark mode toggle
             document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
             
-            // Check authentication
             const isAuth = await checkAuth();
             
             if (!isAuth) {
