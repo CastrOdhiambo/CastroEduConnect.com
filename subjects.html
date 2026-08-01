@@ -51,6 +51,8 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             border-left: 4px solid #2563EB;
+            position: relative;
+            overflow: hidden;
         }
         .subject-card:hover {
             transform: translateY(-4px);
@@ -125,6 +127,52 @@
         @keyframes modalPop {
             from { transform: scale(0.9); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
+        }
+        
+        .grade-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+        .dark .grade-badge {
+            background: #1E3A5F;
+            color: #60A5FA;
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 0.75rem;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1a1a2e 25%, #2a2a3e 50%, #1a1a2e 75%);
+            background-size: 200% 100%;
+        }
+        
+        .form-input-error {
+            border-color: #EF4444 !important;
+        }
+        .form-input-error:focus {
+            border-color: #EF4444 !important;
+            ring-color: #EF4444 !important;
+        }
+        .form-error-message {
+            color: #EF4444;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .form-error-message.show {
+            display: block;
         }
     </style>
 </head>
@@ -220,7 +268,7 @@
         <div class="p-6">
             <!-- Actions -->
             <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <div class="flex items-center space-x-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <select id="filter-grade" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="">All Grades</option>
                     </select>
@@ -231,7 +279,8 @@
                         <option value="dropped">Dropped</option>
                     </select>
                 </div>
-                <button onclick="openAddSubjectModal()" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold flex items-center space-x-2">
+                <button id="add-subject-btn" onclick="openAddSubjectModal()" 
+                        class="btn-primary px-6 py-2 rounded-xl text-white font-semibold flex items-center space-x-2 hidden">
                     <i class="fas fa-plus"></i> <span>Add Subject</span>
                 </button>
             </div>
@@ -279,29 +328,42 @@
                 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject Name</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Subject Name <span class="text-red-500">*</span>
+                        </label>
                         <input type="text" id="subject-name" required 
+                               placeholder="e.g., Mathematics"
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                        <div class="form-error-message" id="subject-name-error">Please enter a subject name</div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject Code</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Subject Code <span class="text-red-500">*</span>
+                        </label>
                         <input type="text" id="subject-code" required 
+                               placeholder="e.g., MATH101"
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                        <div class="form-error-message" id="subject-code-error">Please enter a subject code</div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Grade/Class <span class="text-red-500">*</span>
+                        </label>
+                        <select id="subject-grade" required 
+                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="">Select Grade</option>
+                            <!-- Grades will be populated here -->
+                        </select>
+                        <div class="form-error-message" id="subject-grade-error">Please select a grade</div>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
                         <textarea id="subject-description" rows="3" 
+                                  placeholder="Brief description of the subject..."
                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grade</label>
-                        <select id="subject-grade" required 
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            <option value="">Select Grade</option>
-                        </select>
                     </div>
                     
                     <div>
@@ -311,7 +373,7 @@
                     </div>
                     
                     <button type="submit" id="save-subject-btn" 
-                            class="w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg">
+                            class="w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg transition-all duration-300">
                         <i class="fas fa-save mr-2"></i> Save Subject
                     </button>
                 </div>
@@ -333,6 +395,25 @@
         console.log('✅ Supabase client initialized');
 
         // ============================================
+        // GRADES DATA - Predefined
+        // ============================================
+        const GRADES_DATA = [
+            { id: 'grade-1', name: 'Grade 1', code: 'G1', sort_order: 1 },
+            { id: 'grade-2', name: 'Grade 2', code: 'G2', sort_order: 2 },
+            { id: 'grade-3', name: 'Grade 3', code: 'G3', sort_order: 3 },
+            { id: 'grade-4', name: 'Grade 4', code: 'G4', sort_order: 4 },
+            { id: 'grade-5', name: 'Grade 5', code: 'G5', sort_order: 5 },
+            { id: 'grade-6', name: 'Grade 6', code: 'G6', sort_order: 6 },
+            { id: 'grade-7', name: 'Grade 7', code: 'G7', sort_order: 7 },
+            { id: 'grade-8', name: 'Grade 8', code: 'G8', sort_order: 8 },
+            { id: 'grade-9', name: 'Grade 9', code: 'G9', sort_order: 9 },
+            { id: 'form-1', name: 'Form 1', code: 'F1', sort_order: 10 },
+            { id: 'form-2', name: 'Form 2', code: 'F2', sort_order: 11 },
+            { id: 'form-3', name: 'Form 3', code: 'F3', sort_order: 12 },
+            { id: 'form-4', name: 'Form 4', code: 'F4', sort_order: 13 }
+        ];
+
+        // ============================================
         // STATE
         // ============================================
         let currentUser = null;
@@ -341,6 +422,7 @@
         let subjects = [];
         let grades = [];
         let enrollments = [];
+        let filteredSubjects = [];
 
         // ============================================
         // TOAST NOTIFICATIONS
@@ -472,6 +554,11 @@
             
             const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
             document.getElementById('user-avatar').innerHTML = initials || '<i class="fas fa-user"></i>';
+            
+            // Show/hide add button based on role
+            if (userRole === 'teacher' || userRole === 'admin') {
+                document.getElementById('add-subject-btn').classList.remove('hidden');
+            }
         }
 
         // ============================================
@@ -482,8 +569,8 @@
                 await loadGrades();
                 await loadSubjects();
                 await loadEnrollments();
-                renderSubjects();
                 populateFilters();
+                applyFilters();
             } catch (error) {
                 console.error('Error loading data:', error);
                 showToast('Error loading subjects data', 'error');
@@ -491,24 +578,75 @@
         }
 
         // ============================================
-        // LOAD GRADES
+        // LOAD GRADES - Use predefined or fetch from DB
         // ============================================
         async function loadGrades() {
             try {
+                // Try to fetch from database first
                 const { data, error } = await supabaseClient
                     .from('grades')
                     .select('*')
                     .order('sort_order', { ascending: true });
                 
-                if (error) throw error;
-                grades = data || [];
+                if (error || !data || data.length === 0) {
+                    // If no grades in DB, use predefined and seed
+                    console.log('No grades in DB, using predefined grades');
+                    grades = GRADES_DATA;
+                    
+                    // Seed grades into database if they don't exist
+                    for (const grade of grades) {
+                        const { error: insertError } = await supabaseClient
+                            .from('grades')
+                            .upsert({
+                                id: grade.id,
+                                name: grade.name,
+                                code: grade.code,
+                                sort_order: grade.sort_order,
+                                is_active: true
+                            }, { onConflict: 'id' });
+                        
+                        if (insertError) {
+                            console.error('Error seeding grade:', insertError);
+                        }
+                    }
+                } else {
+                    grades = data;
+                }
+                
                 console.log('📚 Grades loaded:', grades.length);
+                populateGradeDropdowns();
                 return grades;
             } catch (error) {
                 console.error('Error loading grades:', error);
-                grades = [];
-                return [];
+                // Fallback to predefined
+                grades = GRADES_DATA;
+                populateGradeDropdowns();
+                return grades;
             }
+        }
+
+        // ============================================
+        // POPULATE GRADE DROPDOWNS
+        // ============================================
+        function populateGradeDropdowns() {
+            const selectors = ['subject-grade', 'filter-grade'];
+            
+            selectors.forEach(selectorId => {
+                const select = document.getElementById(selectorId);
+                if (!select) return;
+                
+                // Clear existing options (keep first option if it's placeholder)
+                const options = select.querySelectorAll('option:not([value=""])');
+                options.forEach(opt => opt.remove());
+                
+                // Add grade options
+                grades.forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade.id;
+                    option.textContent = grade.name;
+                    select.appendChild(option);
+                });
+            });
         }
 
         // ============================================
@@ -520,8 +658,8 @@
                     .from('subjects')
                     .select(`
                         *,
-                        grades (name, code),
-                        profiles (first_name, last_name)
+                        grades (id, name, code),
+                        profiles (id, first_name, last_name)
                     `);
                 
                 // If learner, only show enrolled subjects
@@ -538,7 +676,6 @@
                     if (subjectIds.length > 0) {
                         query = query.in('id', subjectIds);
                     } else {
-                        // No subjects enrolled
                         subjects = [];
                         return;
                     }
@@ -578,12 +715,56 @@
         }
 
         // ============================================
+        // POPULATE FILTERS
+        // ============================================
+        function populateFilters() {
+            // Grade filter is populated by populateGradeDropdowns
+        }
+
+        // ============================================
+        // APPLY FILTERS
+        // ============================================
+        document.getElementById('filter-grade').addEventListener('change', applyFilters);
+        document.getElementById('filter-status').addEventListener('change', applyFilters);
+        document.getElementById('search-input').addEventListener('input', applyFilters);
+
+        function applyFilters() {
+            const gradeFilter = document.getElementById('filter-grade').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
+            filteredSubjects = [...subjects];
+            
+            if (gradeFilter) {
+                filteredSubjects = filteredSubjects.filter(s => s.grade_id === gradeFilter);
+            }
+            
+            if (statusFilter) {
+                filteredSubjects = filteredSubjects.filter(s => {
+                    const enrollment = enrollments.find(e => e.subject_id === s.id);
+                    const status = enrollment?.status || 'not_enrolled';
+                    return status === statusFilter;
+                });
+            }
+            
+            if (searchTerm) {
+                filteredSubjects = filteredSubjects.filter(s => 
+                    s.name.toLowerCase().includes(searchTerm) ||
+                    s.code.toLowerCase().includes(searchTerm) ||
+                    (s.description && s.description.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderSubjects();
+        }
+
+        // ============================================
         // RENDER SUBJECTS
         // ============================================
         function renderSubjects() {
             const container = document.getElementById('subjects-container');
             
-            if (!subjects || subjects.length === 0) {
+            if (!filteredSubjects || filteredSubjects.length === 0) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-12">
                         <i class="fas fa-book-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
@@ -601,10 +782,12 @@
                 return;
             }
             
-            container.innerHTML = subjects.map(subject => {
-                const gradeName = subject.grades?.name || 'N/A';
-                const teacherName = subject.profiles?.first_name && subject.profiles?.last_name 
-                    ? `${subject.profiles.first_name} ${subject.profiles.last_name}`
+            container.innerHTML = filteredSubjects.map(subject => {
+                const grade = subject.grades;
+                const teacher = subject.profiles;
+                const gradeName = grade?.name || 'No Grade';
+                const teacherName = teacher?.first_name && teacher?.last_name 
+                    ? `${teacher.first_name} ${teacher.last_name}`
                     : 'No teacher assigned';
                 
                 // Find enrollment status
@@ -622,9 +805,6 @@
                     'dropped': 'Dropped',
                     'not_enrolled': 'Not Enrolled'
                 };
-                
-                // Calculate progress (mock data for now)
-                const progress = Math.floor(Math.random() * 100);
                 
                 return `
                     <div class="subject-card" style="border-left-color: ${subject.color || '#2563EB'}">
@@ -644,25 +824,14 @@
                             </span>
                         </div>
                         
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${subject.description || 'No description available'}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${subject.description || 'No description available'}</p>
                         
                         <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3">
                             <span><i class="fas fa-graduation-cap mr-1"></i> ${gradeName}</span>
                             <span><i class="fas fa-user mr-1"></i> ${teacherName}</span>
                         </div>
                         
-                        <div class="mb-3">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">Progress: ${progress}%</span>
-                                <span class="text-gray-600 dark:text-gray-400">${status === 'completed' ? '✅ Complete' : 'In Progress'}</span>
-                            </div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
-                                <div class="h-2 rounded-full transition-all" 
-                                     style="width: ${progress}%; background: ${subject.color || '#2563EB'}"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center gap-2 mt-2">
                             <button onclick="viewSubject('${subject.id}')" 
                                     class="flex-1 py-2 border border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition font-medium text-sm">
                                 <i class="fas fa-eye mr-1"></i> View
@@ -684,77 +853,6 @@
         }
 
         // ============================================
-        // POPULATE FILTERS
-        // ============================================
-        function populateFilters() {
-            // Populate grade filter
-            const gradeSelect = document.getElementById('filter-grade');
-            const gradeOptions = gradeSelect.querySelectorAll('option:not([value=""])');
-            gradeOptions.forEach(opt => opt.remove());
-            
-            grades.forEach(grade => {
-                const option = document.createElement('option');
-                option.value = grade.id;
-                option.textContent = grade.name;
-                gradeSelect.appendChild(option);
-            });
-            
-            // Populate grade dropdown in modal
-            const modalGradeSelect = document.getElementById('subject-grade');
-            const modalOptions = modalGradeSelect.querySelectorAll('option:not([value=""])');
-            modalOptions.forEach(opt => opt.remove());
-            
-            grades.forEach(grade => {
-                const option = document.createElement('option');
-                option.value = grade.id;
-                option.textContent = grade.name;
-                modalGradeSelect.appendChild(option);
-            });
-        }
-
-        // ============================================
-        // FILTER SUBJECTS
-        // ============================================
-        document.getElementById('filter-grade').addEventListener('change', filterSubjects);
-        document.getElementById('filter-status').addEventListener('change', filterSubjects);
-        document.getElementById('search-input').addEventListener('input', filterSubjects);
-
-        function filterSubjects() {
-            const gradeFilter = document.getElementById('filter-grade').value;
-            const statusFilter = document.getElementById('filter-status').value;
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
-            
-            let filtered = [...subjects];
-            
-            if (gradeFilter) {
-                filtered = filtered.filter(s => s.grade_id === gradeFilter);
-            }
-            
-            if (statusFilter) {
-                const enrollment = enrollments.find(e => e.subject_id === s.id);
-                filtered = filtered.filter(s => {
-                    const enrollment = enrollments.find(e => e.subject_id === s.id);
-                    const status = enrollment?.status || 'not_enrolled';
-                    return status === statusFilter;
-                });
-            }
-            
-            if (searchTerm) {
-                filtered = filtered.filter(s => 
-                    s.name.toLowerCase().includes(searchTerm) ||
-                    s.code.toLowerCase().includes(searchTerm) ||
-                    (s.description && s.description.toLowerCase().includes(searchTerm))
-                );
-            }
-            
-            // Re-render with filtered subjects
-            const originalSubjects = subjects;
-            subjects = filtered;
-            renderSubjects();
-            subjects = originalSubjects;
-        }
-
-        // ============================================
         // VIEW SUBJECT
         // ============================================
         function viewSubject(subjectId) {
@@ -764,8 +862,62 @@
                 return;
             }
             
-            showToast(`Viewing: ${subject.name}`, 'info');
-            // Could navigate to subject detail page or open modal
+            const grade = subject.grades;
+            const teacher = subject.profiles;
+            
+            const details = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded-xl flex items-center justify-center" 
+                             style="background: ${subject.color || '#2563EB'}20; color: ${subject.color || '#2563EB'}">
+                            <i class="fas fa-book text-3xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white">${subject.name}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${subject.code}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Grade</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${grade?.name || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Teacher</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${teacher?.first_name || 'N/A'} ${teacher?.last_name || ''}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Color</p>
+                            <div class="w-8 h-8 rounded-full" style="background: ${subject.color || '#2563EB'}"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${subject.is_active ? 'Active' : 'Inactive'}</p>
+                        </div>
+                    </div>
+                    
+                    ${subject.description ? `
+                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📝 Description</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${subject.description}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <button onclick="closeModal()" class="w-full btn-primary py-2 rounded-xl text-white font-semibold">
+                        Close
+                    </button>
+                </div>
+            `;
+            
+            // Show in modal
+            document.getElementById('modal-title').textContent = 'Subject Details';
+            document.getElementById('subject-form').style.display = 'none';
+            const modalBody = document.createElement('div');
+            modalBody.id = 'modal-body';
+            modalBody.innerHTML = details;
+            document.querySelector('.modal-content').appendChild(modalBody);
+            document.getElementById('subject-modal').classList.add('active');
         }
 
         // ============================================
@@ -777,6 +929,7 @@
                 return;
             }
             
+            // Reset form
             document.getElementById('modal-title').textContent = 'Add New Subject';
             document.getElementById('edit-subject-id').value = '';
             document.getElementById('subject-name').value = '';
@@ -785,6 +938,15 @@
             document.getElementById('subject-color').value = '#2563EB';
             document.getElementById('subject-grade').value = '';
             document.getElementById('save-subject-btn').innerHTML = '<i class="fas fa-save mr-2"></i> Save Subject';
+            
+            // Remove any existing modal body
+            const existingBody = document.getElementById('modal-body');
+            if (existingBody) existingBody.remove();
+            document.getElementById('subject-form').style.display = 'block';
+            
+            // Clear errors
+            document.querySelectorAll('.form-error-message.show').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.form-input-error').forEach(el => el.classList.remove('form-input-error'));
             
             document.getElementById('subject-modal').classList.add('active');
         }
@@ -804,6 +966,11 @@
                 return;
             }
             
+            // Remove any existing modal body
+            const existingBody = document.getElementById('modal-body');
+            if (existingBody) existingBody.remove();
+            document.getElementById('subject-form').style.display = 'block';
+            
             document.getElementById('modal-title').textContent = 'Edit Subject';
             document.getElementById('edit-subject-id').value = subject.id;
             document.getElementById('subject-name').value = subject.name;
@@ -821,6 +988,10 @@
         // ============================================
         function closeModal() {
             document.getElementById('subject-modal').classList.remove('active');
+            // Clean up
+            const existingBody = document.getElementById('modal-body');
+            if (existingBody) existingBody.remove();
+            document.getElementById('subject-form').style.display = 'block';
         }
 
         // ============================================
@@ -836,7 +1007,31 @@
             const gradeId = document.getElementById('subject-grade').value;
             const color = document.getElementById('subject-color').value;
             
-            if (!name || !code || !gradeId) {
+            // Reset errors
+            document.querySelectorAll('.form-error-message.show').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.form-input-error').forEach(el => el.classList.remove('form-input-error'));
+            
+            let isValid = true;
+            
+            if (!name) {
+                document.getElementById('subject-name').classList.add('form-input-error');
+                document.getElementById('subject-name-error').classList.add('show');
+                isValid = false;
+            }
+            
+            if (!code) {
+                document.getElementById('subject-code').classList.add('form-input-error');
+                document.getElementById('subject-code-error').classList.add('show');
+                isValid = false;
+            }
+            
+            if (!gradeId) {
+                document.getElementById('subject-grade').classList.add('form-input-error');
+                document.getElementById('subject-grade-error').classList.add('show');
+                isValid = false;
+            }
+            
+            if (!isValid) {
                 showToast('Please fill in all required fields', 'warning');
                 return;
             }
@@ -852,7 +1047,8 @@
                     description,
                     grade_id: gradeId,
                     color,
-                    teacher_id: currentUser.id
+                    teacher_id: currentUser.id,
+                    is_active: true
                 };
                 
                 let result;
@@ -927,6 +1123,30 @@
                 showToast('Error deleting subject: ' + error.message, 'error');
             }
         }
+
+        // ============================================
+        // REAL-TIME VALIDATION
+        // ============================================
+        document.getElementById('subject-name').addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('form-input-error');
+                document.getElementById('subject-name-error').classList.remove('show');
+            }
+        });
+        
+        document.getElementById('subject-code').addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('form-input-error');
+                document.getElementById('subject-code-error').classList.remove('show');
+            }
+        });
+        
+        document.getElementById('subject-grade').addEventListener('change', function() {
+            if (this.value) {
+                this.classList.remove('form-input-error');
+                document.getElementById('subject-grade-error').classList.remove('show');
+            }
+        });
 
         // ============================================
         // DARK MODE
