@@ -46,6 +46,33 @@
         .dark .login-card {
             background: rgba(17, 24, 39, 0.9);
         }
+        
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            color: white;
+            animation: slideInRight 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 300px;
+            max-width: 450px;
+        }
+        .toast-success { background: #10B981; }
+        .toast-error { background: #EF4444; }
+        .toast-warning { background: #F59E0B; }
+        .toast-info { background: #3B82F6; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
@@ -170,7 +197,7 @@
         // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('✅ Supabase client initialized');
-        
+
         // ============================================
         // TOGGLE PASSWORD VISIBILITY
         // ============================================
@@ -186,7 +213,7 @@
                 icon.className = 'fas fa-eye';
             }
         }
-        
+
         // ============================================
         // SHOW TOAST MESSAGES
         // ============================================
@@ -217,26 +244,31 @@
                 setTimeout(() => toast.remove(), 300);
             }, duration);
         }
-        
+
         // ============================================
         // CHECK IF USER IS ALREADY LOGGED IN
         // ============================================
-        async function checkSession() {
+        async function checkExistingSession() {
             try {
                 const { data: { session }, error } = await supabaseClient.auth.getSession();
+                
+                if (error) {
+                    console.error('Session check error:', error);
+                    return false;
+                }
+                
                 if (session) {
                     console.log('✅ User already logged in:', session.user.email);
-                    // Redirect to dashboard
-                    window.location.href = 'dashboard.html';
                     return true;
                 }
+                
                 return false;
             } catch (error) {
-                console.error('Error checking session:', error);
+                console.error('Session check error:', error);
                 return false;
             }
         }
-        
+
         // ============================================
         // SOCIAL LOGIN
         // ============================================
@@ -258,7 +290,7 @@
                 showToast(`Failed to login with ${provider}: ${error.message}`, 'error');
             }
         }
-        
+
         // ============================================
         // HANDLE LOGIN
         // ============================================
@@ -347,13 +379,9 @@
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 btn.className = 'w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg flex items-center justify-center space-x-2';
-                
-                // Highlight the fields
-                document.getElementById('email').classList.add('input-error');
-                document.getElementById('password').classList.add('input-error');
             }
         });
-        
+
         // ============================================
         // REMOVE ERROR STATES ON INPUT
         // ============================================
@@ -366,7 +394,7 @@
             this.classList.remove('input-error');
             document.getElementById('password-error').classList.remove('show');
         });
-        
+
         // ============================================
         // KEYBOARD SHORTCUTS
         // ============================================
@@ -376,40 +404,43 @@
                 document.getElementById('login-form').dispatchEvent(new Event('submit'));
             }
         });
-        
+
         // ============================================
-        // AUTO-FILL DEMO CREDENTIALS (for testing)
+        // DEMO CREDENTIALS (for testing)
         // ============================================
         function fillDemoCredentials() {
-            // Only fill if fields are empty
-            if (!document.getElementById('email').value) {
-                document.getElementById('email').value = 'demo@castroeduconnect.com';
-            }
-            if (!document.getElementById('password').value) {
-                document.getElementById('password').value = 'Demo123!@#';
-            }
-            showToast('Demo credentials filled!', 'info');
+            document.getElementById('email').value = 'demo@castroeduconnect.com';
+            document.getElementById('password').value = 'Demo123!@#';
+            showToast('Demo credentials filled! Click Login', 'info');
         }
-        
+
         // ============================================
         // INITIALIZATION
         // ============================================
         (async function init() {
-            console.log('🚀 CastroEduConnect Login Page Loaded');
+            console.log('🚀 CastroEduConnect Login Page Loading...');
             console.log('📧 Supabase URL:', SUPABASE_URL);
             console.log('🔑 Supabase Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
             
             // Check if user is already logged in
-            const hasSession = await checkSession();
+            const hasSession = await checkExistingSession();
             
-            // If no session, show login form
-            if (!hasSession) {
-                console.log('👤 No active session, showing login form');
+            if (hasSession) {
+                console.log('👤 Active session found, redirecting to dashboard...');
+                showToast('You are already logged in! Redirecting...', 'info');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+                return;
             }
+            
+            console.log('👤 No active session, showing login form');
             
             // Add demo fill option (double-click on logo)
             document.querySelector('.gradient-bg').addEventListener('dblclick', fillDemoCredentials);
             console.log('💡 Double-click the logo to fill demo credentials');
+            
+            console.log('✅ Login page initialized successfully');
         })();
     </script>
 </body>
