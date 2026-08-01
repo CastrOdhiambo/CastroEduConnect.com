@@ -44,23 +44,6 @@
             background: linear-gradient(135deg, #2563EB 0%, #4F46E5 50%, #7C3AED 100%);
         }
         
-        .assignment-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            border-left: 4px solid #2563EB;
-        }
-        .assignment-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
-        }
-        .dark .assignment-card {
-            background: #1a1a2e;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-        
         .spinner {
             animation: spin 1s linear infinite;
         }
@@ -113,8 +96,8 @@
             background: white;
             border-radius: 2rem;
             padding: 2rem;
-            max-width: 600px;
-            width: 90%;
+            max-width: 800px;
+            width: 95%;
             max-height: 90vh;
             overflow-y: auto;
             animation: modalPop 0.3s ease;
@@ -127,22 +110,93 @@
             to { transform: scale(1); opacity: 1; }
         }
         
+        .assignment-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-left: 4px solid #2563EB;
+        }
+        .assignment-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
+        }
+        .dark .assignment-card {
+            background: #1a1a2e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .question-block {
+            background: #F9FAFB;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .dark .question-block {
+            background: #1F2937;
+        }
+        
+        .choice-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .choice-option:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+        .dark .choice-option:hover {
+            background: rgba(37, 99, 235, 0.1);
+        }
+        .choice-option.selected {
+            background: rgba(37, 99, 235, 0.1);
+            border: 2px solid #2563EB;
+        }
+        .dark .choice-option.selected {
+            background: rgba(37, 99, 235, 0.2);
+        }
+        
+        .correct-answer {
+            border-left: 4px solid #10B981;
+        }
+        .wrong-answer {
+            border-left: 4px solid #EF4444;
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 0.75rem;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1a1a2e 25%, #2a2a3e 50%, #1a1a2e 75%);
+            background-size: 200% 100%;
+        }
+        
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
         }
         .status-draft { background: #E5E7EB; color: #6B7280; }
         .status-published { background: #DBEAFE; color: #2563EB; }
         .status-active { background: #D1FAE5; color: #059669; }
         .status-closed { background: #FEE2E2; color: #DC2626; }
-        .status-archived { background: #F3F4F6; color: #9CA3AF; }
+        
         .dark .status-draft { background: #374151; color: #9CA3AF; }
         .dark .status-published { background: #1E3A5F; color: #60A5FA; }
         .dark .status-active { background: #065F46; color: #34D399; }
         .dark .status-closed { background: #7F1D1D; color: #F87171; }
-        .dark .status-archived { background: #1F2937; color: #6B7280; }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -243,18 +297,9 @@
                     </select>
                     <select id="filter-status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="">All Status</option>
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
                         <option value="active">Active</option>
-                        <option value="closed">Closed</option>
-                        <option value="archived">Archived</option>
-                    </select>
-                    <select id="filter-type" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                        <option value="">All Types</option>
-                        <option value="assignment">Assignment</option>
-                        <option value="quiz">Quiz</option>
-                        <option value="cat">CAT</option>
-                        <option value="exam">Exam</option>
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
                     </select>
                 </div>
                 <button id="create-assignment-btn" onclick="openCreateAssignmentModal()" 
@@ -263,38 +308,9 @@
                 </button>
             </div>
 
-            <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats-container">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
-                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="stat-total">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Total</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
-                    <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400" id="stat-pending">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Pending</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
-                    <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="stat-submitted">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Submitted</div>
-                </div>
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
-                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" id="stat-graded">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Graded</div>
-                </div>
-            </div>
-
-            <!-- Assignments List -->
+            <!-- Assignments Grid -->
             <div id="assignments-container" class="space-y-4">
                 <!-- Loading Skeletons -->
-                <div class="assignment-card">
-                    <div class="skeleton h-6 w-3/4 mb-2"></div>
-                    <div class="skeleton h-4 w-1/2 mb-4"></div>
-                    <div class="flex gap-4">
-                        <div class="skeleton h-4 w-1/4"></div>
-                        <div class="skeleton h-4 w-1/4"></div>
-                        <div class="skeleton h-4 w-1/4"></div>
-                    </div>
-                </div>
                 <div class="assignment-card">
                     <div class="skeleton h-6 w-3/4 mb-2"></div>
                     <div class="skeleton h-4 w-1/2 mb-4"></div>
@@ -352,26 +368,26 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type *</label>
-                            <select id="assignment-type" required 
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                            <select id="assignment-status" 
                                     class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                <option value="assignment">Assignment</option>
-                                <option value="quiz">Quiz</option>
-                                <option value="cat">CAT</option>
-                                <option value="exam">Exam</option>
+                                <option value="draft">Draft</option>
+                                <option value="published">Published</option>
+                                <option value="active">Active</option>
+                                <option value="closed">Closed</option>
                             </select>
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Opening Date</label>
-                            <input type="datetime-local" id="assignment-opening" 
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Due Date</label>
+                            <input type="datetime-local" id="assignment-due" 
                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Closing Date</label>
-                            <input type="datetime-local" id="assignment-closing" 
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Limit (minutes)</label>
+                            <input type="number" id="assignment-time-limit" value="60" 
                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                         </div>
                     </div>
@@ -389,21 +405,18 @@
                         </div>
                     </div>
                     
+                    <!-- Questions Section -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Limit (minutes)</label>
-                        <input type="number" id="assignment-time-limit" value="60" 
-                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="assignment-randomize" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">Randomize Questions</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="assignment-shuffle" />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">Shuffle Answers</span>
-                        </label>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Questions</label>
+                            <button type="button" onclick="addQuestion()" 
+                                    class="text-blue-600 dark:text-blue-400 hover:text-blue-700 text-sm font-medium">
+                                <i class="fas fa-plus mr-1"></i> Add Question
+                            </button>
+                        </div>
+                        <div id="questions-container">
+                            <!-- Questions will be added here dynamically -->
+                        </div>
                     </div>
                     
                     <button type="submit" id="save-assignment-btn" 
@@ -415,17 +428,54 @@
         </div>
     </div>
 
-    <!-- View Assignment Modal -->
-    <div id="view-assignment-modal" class="modal-overlay">
-        <div class="modal-content">
+    <!-- Attempt Assignment Modal -->
+    <div id="attempt-modal" class="modal-overlay">
+        <div class="modal-content max-w-3xl">
             <div class="flex items-center justify-between mb-6">
-                <h2 id="view-title" class="text-2xl font-bold text-gray-900 dark:text-white">Assignment Details</h2>
-                <button onclick="closeViewModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
+                <h2 id="attempt-title" class="text-2xl font-bold text-gray-900 dark:text-white">Assignment</h2>
+                <div class="flex items-center gap-4">
+                    <span id="attempt-timer" class="text-lg font-semibold text-blue-600 dark:text-blue-400">⏱ 60:00</span>
+                    <button onclick="closeAttemptModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="attempt-content" class="space-y-6">
+                <!-- Questions will be rendered here -->
+            </div>
+            
+            <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <span id="question-progress" class="text-sm text-gray-500 dark:text-gray-400">Question 1 of 1</span>
+                <div class="flex gap-3">
+                    <button id="prev-question" onclick="changeQuestion(-1)" 
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium hidden">
+                        <i class="fas fa-chevron-left mr-2"></i> Previous
+                    </button>
+                    <button id="next-question" onclick="changeQuestion(1)" 
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium">
+                        Next <i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                    <button id="submit-attempt" onclick="submitAssignment()" 
+                            class="btn-primary px-6 py-2 rounded-xl text-white font-semibold">
+                        <i class="fas fa-paper-plane mr-2"></i> Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal-overlay">
+        <div class="modal-content max-w-3xl">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">📊 Results</h2>
+                <button onclick="closeResultsModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div id="view-content" class="space-y-4">
-                <!-- Dynamic content will be inserted here -->
+            <div id="results-content" class="space-y-4">
+                <!-- Results will be rendered here -->
             </div>
         </div>
     </div>
@@ -451,7 +501,13 @@
         let userRole = 'learner';
         let assignments = [];
         let subjects = [];
-        let submissions = [];
+        let enrollments = [];
+        let filteredAssignments = [];
+        let questionCount = 0;
+        let currentAttempt = null;
+        let currentQuestionIndex = 0;
+        let timerInterval = null;
+        let timeRemaining = 0;
 
         // ============================================
         // TOAST NOTIFICATIONS
@@ -596,11 +652,10 @@
         async function loadData() {
             try {
                 await loadSubjects();
+                await loadEnrollments();
                 await loadAssignments();
-                await loadSubmissions();
-                renderAssignments();
                 populateFilters();
-                updateStats();
+                applyFilters();
             } catch (error) {
                 console.error('Error loading data:', error);
                 showToast('Error loading assignments data', 'error');
@@ -616,7 +671,6 @@
                     .from('subjects')
                     .select('*');
                 
-                // If learner, only show enrolled subjects
                 if (userRole === 'learner') {
                     const { data: enrolls, error: enrollError } = await supabaseClient
                         .from('subject_enrollments')
@@ -634,7 +688,6 @@
                         return;
                     }
                 } else {
-                    // Teachers see their subjects
                     query = query.eq('teacher_id', currentUser.id);
                 }
                 
@@ -643,10 +696,51 @@
                 if (error) throw error;
                 subjects = data || [];
                 console.log('📚 Subjects loaded:', subjects.length);
+                
+                // Populate subject dropdowns
+                const selects = ['filter-subject', 'assignment-subject'];
+                selects.forEach(id => {
+                    const select = document.getElementById(id);
+                    const options = select.querySelectorAll('option:not([value=""])');
+                    options.forEach(opt => opt.remove());
+                    
+                    subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject.id;
+                        option.textContent = subject.name;
+                        select.appendChild(option);
+                    });
+                });
+                
                 return subjects;
             } catch (error) {
                 console.error('Error loading subjects:', error);
                 subjects = [];
+                return [];
+            }
+        }
+
+        // ============================================
+        // LOAD ENROLLMENTS
+        // ============================================
+        async function loadEnrollments() {
+            try {
+                if (userRole !== 'learner') {
+                    enrollments = [];
+                    return [];
+                }
+                
+                const { data, error } = await supabaseClient
+                    .from('subject_enrollments')
+                    .select('*')
+                    .eq('learner_id', currentUser.id);
+                
+                if (error) throw error;
+                enrollments = data || [];
+                return enrollments;
+            } catch (error) {
+                console.error('Error loading enrollments:', error);
+                enrollments = [];
                 return [];
             }
         }
@@ -660,11 +754,11 @@
                     .from('assessments')
                     .select(`
                         *,
-                        subjects (name, code, color),
+                        subjects (id, name, color),
                         profiles (first_name, last_name)
-                    `);
+                    `)
+                    .order('created_at', { ascending: false });
                 
-                // If learner, only show published/active assignments from enrolled subjects
                 if (userRole === 'learner') {
                     const subjectIds = subjects.map(s => s.id);
                     if (subjectIds.length > 0) {
@@ -674,11 +768,10 @@
                         return;
                     }
                 } else {
-                    // Teachers see their assignments
                     query = query.eq('teacher_id', currentUser.id);
                 }
                 
-                const { data, error } = await query.order('created_at', { ascending: false });
+                const { data, error } = await query;
                 
                 if (error) throw error;
                 assignments = data || [];
@@ -692,24 +785,45 @@
         }
 
         // ============================================
-        // LOAD SUBMISSIONS
+        // POPULATE FILTERS
         // ============================================
-        async function loadSubmissions() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('submissions')
-                    .select('*')
-                    .eq('learner_id', currentUser.id);
-                
-                if (error) throw error;
-                submissions = data || [];
-                console.log('📋 Submissions loaded:', submissions.length);
-                return submissions;
-            } catch (error) {
-                console.error('Error loading submissions:', error);
-                submissions = [];
-                return [];
+        function populateFilters() {
+            // Subjects already populated in loadSubjects
+        }
+
+        // ============================================
+        // APPLY FILTERS
+        // ============================================
+        document.getElementById('filter-subject').addEventListener('change', applyFilters);
+        document.getElementById('filter-status').addEventListener('change', applyFilters);
+        document.getElementById('search-input').addEventListener('input', applyFilters);
+
+        function applyFilters() {
+            const subjectFilter = document.getElementById('filter-subject').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
+            filteredAssignments = [...assignments];
+            
+            if (subjectFilter) {
+                filteredAssignments = filteredAssignments.filter(a => a.subject_id === subjectFilter);
             }
+            
+            if (statusFilter) {
+                // For learners, filter by completion status
+                if (userRole === 'learner') {
+                    // We'll check if assignment has been attempted                    // This is simplified - in production, you'd check submissions
+                }
+            }
+            
+            if (searchTerm) {
+                filteredAssignments = filteredAssignments.filter(a => 
+                    a.title.toLowerCase().includes(searchTerm) ||
+                    (a.description && a.description.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            renderAssignments();
         }
 
         // ============================================
@@ -718,7 +832,7 @@
         function renderAssignments() {
             const container = document.getElementById('assignments-container');
             
-            if (!assignments || assignments.length === 0) {
+            if (!filteredAssignments || filteredAssignments.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-12">
                         <i class="fas fa-tasks text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
@@ -736,31 +850,13 @@
                 return;
             }
             
-            container.innerHTML = assignments.map(assignment => {
+            container.innerHTML = filteredAssignments.map(assignment => {
                 const subject = assignment.subjects;
                 const teacher = assignment.profiles;
-                const submission = submissions.find(s => s.assessment_id === assignment.id);
-                
-                const statusColors = {
-                    'draft': 'status-draft',
-                    'published': 'status-published',
-                    'active': 'status-active',
-                    'closed': 'status-closed',
-                    'archived': 'status-archived'
-                };
-                
-                const submissionStatus = submission?.status || 'not_submitted';
-                const submissionBadge = {
-                    'not_submitted': '<span class="text-sm text-gray-500 dark:text-gray-400">Not Submitted</span>',
-                    'in_progress': '<span class="text-sm text-yellow-600 dark:text-yellow-400">📝 In Progress</span>',
-                    'submitted': '<span class="text-sm text-blue-600 dark:text-blue-400">⏳ Pending Review</span>',
-                    'graded': `<span class="text-sm text-green-600 dark:text-green-400">✅ Graded: ${Math.round(submission?.percentage || 0)}%</span>`,
-                    'returned': `<span class="text-sm text-purple-600 dark:text-purple-400">📊 Returned: ${Math.round(submission?.percentage || 0)}%</span>`
-                };
-                
-                const isOverdue = assignment.closing_date && new Date(assignment.closing_date) < new Date();
+                const statusClass = `status-${assignment.status || 'draft'}`;
+                const statusLabel = assignment.status ? assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1) : 'Draft';
                 const dueDate = assignment.closing_date ? new Date(assignment.closing_date).toLocaleDateString() : 'No due date';
-                const daysUntil = assignment.closing_date ? getDaysUntil(assignment.closing_date) : null;
+                const isOverdue = assignment.closing_date && new Date(assignment.closing_date) < new Date();
                 
                 return `
                     <div class="assignment-card" style="border-left-color: ${subject?.color || '#2563EB'}">
@@ -770,12 +866,7 @@
                                     <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background: ${subject?.color || '#2563EB'}20; color: ${subject?.color || '#2563EB'}">
                                         ${subject?.name || 'No Subject'}
                                     </span>
-                                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                                        ${assignment.assessment_type?.toUpperCase() || 'Assignment'}
-                                    </span>
-                                    <span class="status-badge ${statusColors[assignment.status] || 'status-draft'}">
-                                        ${assignment.status || 'Draft'}
-                                    </span>
+                                    <span class="status-badge ${statusClass}">${statusLabel}</span>
                                     ${isOverdue && assignment.status !== 'closed' ? 
                                         '<span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">⚠️ Overdue</span>' : ''}
                                 </div>
@@ -786,22 +877,28 @@
                                 <div class="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
                                     <span><i class="fas fa-user mr-1"></i> ${teacher?.first_name || 'Unknown'} ${teacher?.last_name || ''}</span>
                                     <span><i class="fas fa-calendar mr-1"></i> Due: ${dueDate}</span>
-                                    ${daysUntil !== null ? `<span class="${daysUntil <= 2 ? 'text-red-500 font-semibold' : ''}">${daysUntil} days left</span>` : ''}
                                     <span><i class="fas fa-star mr-1"></i> ${assignment.total_marks || 0} marks</span>
                                     <span><i class="fas fa-clock mr-1"></i> ${assignment.time_limit || 0} min</span>
+                                    <span><i class="fas fa-question-circle mr-1"></i> ${assignment.question_count || 0} questions</span>
                                 </div>
                             </div>
                             
                             <div class="flex flex-col items-end gap-2">
-                                <div class="text-right">
-                                    ${submissionBadge[submissionStatus] || submissionBadge['not_submitted']}
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="viewAssignment('${assignment.id}')" 
-                                            class="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition font-medium text-sm">
-                                        <i class="fas fa-eye mr-1"></i> View
-                                    </button>
-                                    ${userRole !== 'learner' ? `
+                                ${userRole === 'learner' ? `
+                                    ${assignment.status === 'active' && !isOverdue ? `
+                                        <button onclick="attemptAssignment('${assignment.id}')" 
+                                                class="btn-primary px-6 py-2 rounded-xl text-white font-semibold text-sm">
+                                            <i class="fas fa-play mr-2"></i> Start Assignment
+                                        </button>
+                                    ` : `
+                                        <span class="text-sm text-gray-500 dark:text-gray-400">${assignment.status === 'closed' ? '🔒 Closed' : isOverdue ? '⏰ Overdue' : '⏳ Not Available'}</span>
+                                    `}
+                                ` : `
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="viewAssignment('${assignment.id}')" 
+                                                class="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition font-medium text-sm">
+                                            <i class="fas fa-eye mr-1"></i> View
+                                        </button>
                                         <button onclick="editAssignment('${assignment.id}')" 
                                                 class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium text-sm">
                                             <i class="fas fa-edit mr-1"></i> Edit
@@ -810,247 +907,13 @@
                                                 class="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition font-medium text-sm">
                                             <i class="fas fa-trash"></i>
                                         </button>
-                                    ` : (submissionStatus === 'not_submitted' && !isOverdue ? `
-                                        <button onclick="startAssignment('${assignment.id}')" 
-                                                class="px-4 py-2 btn-primary rounded-xl text-white font-semibold text-sm">
-                                            <i class="fas fa-play mr-1"></i> Start
-                                        </button>
-                                    ` : '')}
-                                </div>
+                                    </div>
+                                `}
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
-        }
-
-        // ============================================
-        // UPDATE STATS
-        // ============================================
-        function updateStats() {
-            document.getElementById('stat-total').textContent = assignments.length;
-            
-            if (userRole === 'learner') {
-                const pending = submissions.filter(s => s.status === 'in_progress' || s.status === 'submitted').length;
-                const submitted = submissions.filter(s => s.status === 'submitted').length;
-                const graded = submissions.filter(s => s.status === 'graded' || s.status === 'returned').length;
-                
-                document.getElementById('stat-pending').textContent = pending;
-                document.getElementById('stat-submitted').textContent = submitted;
-                document.getElementById('stat-graded').textContent = graded;
-            } else {
-                // For teachers, show stats about their assignments
-                const total = assignments.length;
-                const active = assignments.filter(a => a.status === 'active').length;
-                const closed = assignments.filter(a => a.status === 'closed').length;
-                
-                document.getElementById('stat-pending').textContent = active;
-                document.getElementById('stat-submitted').textContent = closed;
-                document.getElementById('stat-graded').textContent = total - active - closed;
-            }
-        }
-
-        // ============================================
-        // POPULATE FILTERS
-        // ============================================
-        function populateFilters() {
-            // Populate subject filter
-            const subjectSelect = document.getElementById('filter-subject');
-            const subjectOptions = subjectSelect.querySelectorAll('option:not([value=""])');
-            subjectOptions.forEach(opt => opt.remove());
-            
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.id;
-                option.textContent = subject.name;
-                subjectSelect.appendChild(option);
-            });
-            
-            // Populate subject dropdown in modal
-            const modalSubjectSelect = document.getElementById('assignment-subject');
-            const modalOptions = modalSubjectSelect.querySelectorAll('option:not([value=""])');
-            modalOptions.forEach(opt => opt.remove());
-            
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.id;
-                option.textContent = subject.name;
-                modalSubjectSelect.appendChild(option);
-            });
-        }
-
-        // ============================================
-        // FILTER ASSIGNMENTS
-        // ============================================
-        document.getElementById('filter-subject').addEventListener('change', filterAssignments);
-        document.getElementById('filter-status').addEventListener('change', filterAssignments);
-        document.getElementById('filter-type').addEventListener('change', filterAssignments);
-        document.getElementById('search-input').addEventListener('input', filterAssignments);
-
-        function filterAssignments() {
-            const subjectFilter = document.getElementById('filter-subject').value;
-            const statusFilter = document.getElementById('filter-status').value;
-            const typeFilter = document.getElementById('filter-type').value;
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
-            
-            let filtered = [...assignments];
-            
-            if (subjectFilter) {
-                filtered = filtered.filter(a => a.subject_id === subjectFilter);
-            }
-            
-            if (statusFilter) {
-                filtered = filtered.filter(a => a.status === statusFilter);
-            }
-            
-            if (typeFilter) {
-                filtered = filtered.filter(a => a.assessment_type === typeFilter);
-            }
-            
-            if (searchTerm) {
-                filtered = filtered.filter(a => 
-                    a.title.toLowerCase().includes(searchTerm) ||
-                    (a.description && a.description.toLowerCase().includes(searchTerm))
-                );
-            }
-            
-            // Re-render with filtered assignments
-            const originalAssignments = assignments;
-            assignments = filtered;
-            renderAssignments();
-            assignments = originalAssignments;
-        }
-
-        // ============================================
-        // VIEW ASSIGNMENT
-        // ============================================
-        async function viewAssignment(assignmentId) {
-            const assignment = assignments.find(a => a.id === assignmentId);
-            if (!assignment) {
-                showToast('Assignment not found', 'error');
-                return;
-            }
-            
-            const subject = assignment.subjects;
-            const teacher = assignment.profiles;
-            const submission = submissions.find(s => s.assessment_id === assignmentId);
-            
-            const content = document.getElementById('view-content');
-            content.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background: ${subject?.color || '#2563EB'}20; color: ${subject?.color || '#2563EB'}">
-                            ${subject?.name || 'No Subject'}
-                        </span>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                            ${assignment.assessment_type?.toUpperCase() || 'Assignment'}
-                        </span>
-                        <span class="status-badge ${assignment.status === 'draft' ? 'status-draft' : assignment.status === 'published' ? 'status-published' : assignment.status === 'active' ? 'status-active' : assignment.status === 'closed' ? 'status-closed' : 'status-archived'}">
-                            ${assignment.status || 'Draft'}
-                        </span>
-                    </div>
-                    
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">${assignment.title}</h3>
-                    
-                    ${assignment.description ? `<p class="text-gray-600 dark:text-gray-400">${assignment.description}</p>` : ''}
-                    
-                    <div class="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Teacher</p>
-                            <p class="font-medium text-gray-900 dark:text-white">${teacher?.first_name || 'Unknown'} ${teacher?.last_name || ''}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Total Marks</p>
-                            <p class="font-medium text-gray-900 dark:text-white">${assignment.total_marks || 0}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Passing Mark</p>
-                            <p class="font-medium text-gray-900 dark:text-white">${assignment.passing_mark || 0}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Time Limit</p>
-                            <p class="font-medium text-gray-900 dark:text-white">${assignment.time_limit || 0} minutes</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Opening Date</p>
-                            <p class="font-medium text-gray-900 dark:text-white">${assignment.opening_date ? new Date(assignment.opening_date).toLocaleString() : 'Not set'}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Closing Date</p>
-                            <p class="font-medium text-gray-900 dark:text-white">${assignment.closing_date ? new Date(assignment.closing_date).toLocaleString() : 'Not set'}</p>
-                        </div>
-                    </div>
-                    
-                    ${submission ? `
-                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Your Submission</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Status: ${submission.status}</p>
-                            ${submission.percentage ? `<p class="text-sm text-gray-600 dark:text-gray-400">Score: ${Math.round(submission.percentage)}%</p>` : ''}
-                            ${submission.grade ? `<p class="text-sm text-gray-600 dark:text-gray-400">Grade: ${submission.grade}</p>` : ''}
-                            ${submission.teacher_comment ? `<p class="text-sm text-gray-600 dark:text-gray-400">Feedback: ${submission.teacher_comment}</p>` : ''}
-                        </div>
-                    ` : userRole === 'learner' && assignment.status === 'active' && !isOverdue(assignment.closing_date) ? `
-                        <button onclick="startAssignment('${assignment.id}')" class="w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg">
-                            <i class="fas fa-play mr-2"></i> Start Assignment
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-            
-            document.getElementById('view-title').textContent = assignment.title;
-            document.getElementById('view-assignment-modal').classList.add('active');
-        }
-
-        // ============================================
-        // CHECK IF OVERDUE
-        // ============================================
-        function isOverdue(closingDate) {
-            return closingDate && new Date(closingDate) < new Date();
-        }
-
-        // ============================================
-        // GET DAYS UNTIL
-        // ============================================
-        function getDaysUntil(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffTime = date - now;
-            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        }
-
-        // ============================================
-        // START ASSIGNMENT
-        // ============================================
-        async function startAssignment(assignmentId) {
-            try {
-                // Check if already started
-                const existing = submissions.find(s => s.assessment_id === assignmentId);
-                if (existing) {
-                    showToast('You already have a submission in progress', 'warning');
-                    return;
-                }
-                
-                // Create submission
-                const { data, error } = await supabaseClient
-                    .from('submissions')
-                    .insert([{
-                        assessment_id: assignmentId,
-                        learner_id: currentUser.id,
-                        status: 'in_progress',
-                        started_at: new Date().toISOString()
-                    }])
-                    .select();
-                
-                if (error) throw error;
-                
-                showToast('Assignment started! Good luck! 🍀', 'success');
-                await loadSubmissions();
-                renderAssignments();
-                
-            } catch (error) {
-                console.error('Error starting assignment:', error);
-                showToast('Error starting assignment: ' + error.message, 'error');
-            }
         }
 
         // ============================================
@@ -1067,61 +930,158 @@
             document.getElementById('assignment-title').value = '';
             document.getElementById('assignment-description').value = '';
             document.getElementById('assignment-subject').value = '';
-            document.getElementById('assignment-type').value = 'assignment';
-            document.getElementById('assignment-opening').value = '';
-            document.getElementById('assignment-closing').value = '';
+            document.getElementById('assignment-status').value = 'draft';
+            document.getElementById('assignment-due').value = '';
+            document.getElementById('assignment-time-limit').value = '60';
             document.getElementById('assignment-marks').value = '100';
             document.getElementById('assignment-passing').value = '50';
-            document.getElementById('assignment-time-limit').value = '60';
-            document.getElementById('assignment-randomize').checked = false;
-            document.getElementById('assignment-shuffle').checked = false;
+            document.getElementById('questions-container').innerHTML = '';
+            questionCount = 0;
             document.getElementById('save-assignment-btn').innerHTML = '<i class="fas fa-save mr-2"></i> Save Assignment';
             
             document.getElementById('assignment-modal').classList.add('active');
+            // Add a default question
+            addQuestion();
         }
 
         // ============================================
-        // EDIT ASSIGNMENT
+        // ADD QUESTION
         // ============================================
-        function editAssignment(assignmentId) {
-            if (userRole === 'learner') {
-                showToast('Only teachers and admins can edit assignments', 'warning');
-                return;
+        function addQuestion() {
+            questionCount++;
+            const container = document.getElementById('questions-container');
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-block';
+            questionDiv.id = `question-${questionCount}`;
+            questionDiv.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-gray-900 dark:text-white">Question ${questionCount}</h4>
+                    <button type="button" onclick="removeQuestion('${questionDiv.id}')" 
+                            class="text-red-500 hover:text-red-600 text-sm">
+                        <i class="fas fa-times"></i> Remove
+                    </button>
+                </div>
+                <input type="hidden" name="question_ids" value="${questionCount}" />
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question Text *</label>
+                        <input type="text" name="question_text_${questionCount}" required 
+                               placeholder="Enter your question here..."
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question Type</label>
+                        <select name="question_type_${questionCount}" onchange="toggleChoices(this, '${questionCount}')"
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="multiple_choice">Multiple Choice</option>
+                            <option value="true_false">True/False</option>
+                            <option value="short_answer">Short Answer</option>
+                            <option value="essay">Essay</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Marks</label>
+                        <input type="number" name="question_marks_${questionCount}" value="1" 
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                    </div>
+                    
+                    <div id="choices-container-${questionCount}">
+                        <!-- Choices will be added here for multiple choice -->
+                        <div class="mt-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Choices</label>
+                            <div class="space-y-2" id="choices-list-${questionCount}">
+                                <div class="flex items-center gap-2">
+                                    <input type="text" name="choice_${questionCount}_1" placeholder="Choice A" 
+                                           class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    <label class="flex items-center gap-1 text-sm">
+                                        <input type="radio" name="correct_${questionCount}" value="1" /> Correct
+                                    </label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" name="choice_${questionCount}_2" placeholder="Choice B" 
+                                           class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    <label class="flex items-center gap-1 text-sm">
+                                        <input type="radio" name="correct_${questionCount}" value="2" /> Correct
+                                    </label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" name="choice_${questionCount}_3" placeholder="Choice C" 
+                                           class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    <label class="flex items-center gap-1 text-sm">
+                                        <input type="radio" name="correct_${questionCount}" value="3" /> Correct
+                                    </label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" name="choice_${questionCount}_4" placeholder="Choice D" 
+                                           class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                                    <label class="flex items-center gap-1 text-sm">
+                                        <input type="radio" name="correct_${questionCount}" value="4" /> Correct
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button" onclick="addChoice('${questionCount}')" 
+                                    class="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700">
+                                <i class="fas fa-plus mr-1"></i> Add Choice
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(questionDiv);
+        }
+
+        // ============================================
+        // TOGGLE CHOICES BASED ON QUESTION TYPE
+        // ============================================
+        function toggleChoices(select, questionId) {
+            const container = document.getElementById(`choices-container-${questionId}`);
+            if (select.value === 'multiple_choice' || select.value === 'true_false') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
             }
-            
-            const assignment = assignments.find(a => a.id === assignmentId);
-            if (!assignment) {
-                showToast('Assignment not found', 'error');
-                return;
+        }
+
+        // ============================================
+        // ADD CHOICE
+        // ============================================
+        function addChoice(questionId) {
+            const list = document.getElementById(`choices-list-${questionId}`);
+            const choiceCount = list.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2';
+            div.innerHTML = `
+                <input type="text" name="choice_${questionId}_${choiceCount}" placeholder="Choice ${String.fromCharCode(64 + choiceCount)}" 
+                       class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                <label class="flex items-center gap-1 text-sm">
+                    <input type="radio" name="correct_${questionId}" value="${choiceCount}" /> Correct
+                </label>
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            list.appendChild(div);
+        }
+
+        // ============================================
+        // REMOVE QUESTION
+        // ============================================
+        function removeQuestion(questionId) {
+            const element = document.getElementById(questionId);
+            if (element) {
+                element.remove();
+                // Re-number questions
+                const questions = document.querySelectorAll('.question-block');
+                questions.forEach((q, index) => {
+                    const header = q.querySelector('h4');
+                    if (header) {
+                        header.textContent = `Question ${index + 1}`;
+                    }
+                });
             }
-            
-            document.getElementById('modal-title').textContent = 'Edit Assignment';
-            document.getElementById('edit-assignment-id').value = assignment.id;
-            document.getElementById('assignment-title').value = assignment.title;
-            document.getElementById('assignment-description').value = assignment.description || '';
-            document.getElementById('assignment-subject').value = assignment.subject_id || '';
-            document.getElementById('assignment-type').value = assignment.assessment_type || 'assignment';
-            document.getElementById('assignment-opening').value = assignment.opening_date ? assignment.opening_date.slice(0, 16) : '';
-            document.getElementById('assignment-closing').value = assignment.closing_date ? assignment.closing_date.slice(0, 16) : '';
-            document.getElementById('assignment-marks').value = assignment.total_marks || 100;
-            document.getElementById('assignment-passing').value = assignment.passing_mark || 50;
-            document.getElementById('assignment-time-limit').value = assignment.time_limit || 60;
-            document.getElementById('assignment-randomize').checked = assignment.randomize_questions || false;
-            document.getElementById('assignment-shuffle').checked = assignment.shuffle_answers || false;
-            document.getElementById('save-assignment-btn').innerHTML = '<i class="fas fa-save mr-2"></i> Update Assignment';
-            
-            document.getElementById('assignment-modal').classList.add('active');
-        }
-
-        // ============================================
-        // CLOSE MODAL
-        // ============================================
-        function closeModal() {
-            document.getElementById('assignment-modal').classList.remove('active');
-        }
-
-        function closeViewModal() {
-            document.getElementById('view-assignment-modal').classList.remove('active');
         }
 
         // ============================================
@@ -1134,17 +1094,69 @@
             const title = document.getElementById('assignment-title').value.trim();
             const description = document.getElementById('assignment-description').value.trim();
             const subjectId = document.getElementById('assignment-subject').value;
-            const type = document.getElementById('assignment-type').value;
-            const openingDate = document.getElementById('assignment-opening').value;
-            const closingDate = document.getElementById('assignment-closing').value;
+            const status = document.getElementById('assignment-status').value;
+            const dueDate = document.getElementById('assignment-due').value;
+            const timeLimit = parseInt(document.getElementById('assignment-time-limit').value) || 60;
             const totalMarks = parseInt(document.getElementById('assignment-marks').value) || 100;
             const passingMark = parseInt(document.getElementById('assignment-passing').value) || 50;
-            const timeLimit = parseInt(document.getElementById('assignment-time-limit').value) || 60;
-            const randomize = document.getElementById('assignment-randomize').checked;
-            const shuffle = document.getElementById('assignment-shuffle').checked;
             
             if (!title || !subjectId) {
                 showToast('Please fill in all required fields', 'warning');
+                return;
+            }
+            
+            // Collect questions
+            const questionBlocks = document.querySelectorAll('.question-block');
+            if (questionBlocks.length === 0) {
+                showToast('Please add at least one question', 'warning');
+                return;
+            }
+            
+            const questions = [];
+            let totalQuestionMarks = 0;
+            
+            questionBlocks.forEach((block, index) => {
+                const qNum = index + 1;
+                const questionText = block.querySelector(`input[name="question_text_${qNum}"]`)?.value.trim();
+                const questionType = block.querySelector(`select[name="question_type_${qNum}"]`)?.value || 'multiple_choice';
+                const marks = parseInt(block.querySelector(`input[name="question_marks_${qNum}"]`)?.value) || 1;
+                
+                if (!questionText) {
+                    showToast(`Question ${qNum} text is required`, 'warning');
+                    return;
+                }
+                
+                const questionData = {
+                    text: questionText,
+                    type: questionType,
+                    marks: marks,
+                    choices: [],
+                    correctAnswer: null
+                };
+                
+                // Get correct answer
+                const correctRadio = block.querySelector(`input[name="correct_${qNum}"]:checked`);
+                if (correctRadio) {
+                    questionData.correctAnswer = parseInt(correctRadio.value);
+                }
+                
+                // Get choices for multiple choice
+                if (questionType === 'multiple_choice' || questionType === 'true_false') {
+                    const choiceInputs = block.querySelectorAll(`input[name^="choice_${qNum}_"]`);
+                    choiceInputs.forEach((input, idx) => {
+                        const choiceText = input.value.trim();
+                        if (choiceText) {
+                            questionData.choices.push(choiceText);
+                        }
+                    });
+                }
+                
+                totalQuestionMarks += marks;
+                questions.push(questionData);
+            });
+            
+            if (questions.length === 0) {
+                showToast('Please add valid questions', 'warning');
                 return;
             }
             
@@ -1153,26 +1165,24 @@
             btn.innerHTML = '<i class="fas fa-spinner spinner mr-2"></i> Saving...';
             
             try {
+                // Save assignment
                 const assignmentData = {
                     title,
                     description,
                     subject_id: subjectId,
                     teacher_id: currentUser.id,
-                    assessment_type: type,
-                    opening_date: openingDate || null,
-                    closing_date: closingDate || null,
+                    assessment_type: 'assignment',
+                    status: status || 'draft',
+                    closing_date: dueDate || null,
+                    time_limit: timeLimit,
                     total_marks: totalMarks,
                     passing_mark: passingMark,
-                    time_limit: timeLimit,
-                    randomize_questions: randomize,
-                    shuffle_answers: shuffle,
-                    status: 'draft'
+                    question_count: questions.length
                 };
                 
-                let result;
+                let assignmentResult;
                 
                 if (editId) {
-                    // Update existing assignment
                     const { data, error } = await supabaseClient
                         .from('assessments')
                         .update(assignmentData)
@@ -1180,20 +1190,59 @@
                         .select();
                     
                     if (error) throw error;
-                    result = data;
-                    showToast('Assignment updated successfully! ✅', 'success');
+                    assignmentResult = data;
                 } else {
-                    // Create new assignment
                     const { data, error } = await supabaseClient
                         .from('assessments')
                         .insert([assignmentData])
                         .select();
                     
                     if (error) throw error;
-                    result = data;
-                    showToast('Assignment created successfully! 🎉', 'success');
+                    assignmentResult = data;
                 }
                 
+                const assignmentId = assignmentResult[0].id;
+                
+                // Save questions
+                for (let i = 0; i < questions.length; i++) {
+                    const q = questions[i];
+                    const questionData = {
+                        assessment_id: assignmentId,
+                        question_text: q.text,
+                        question_type: q.type,
+                        marks: q.marks,
+                        sort_order: i + 1
+                    };
+                    
+                    const { data: questionResult, error: qError } = await supabaseClient
+                        .from('questions')
+                        .insert([questionData])
+                        .select();
+                    
+                    if (qError) throw qError;
+                    
+                    const questionId = questionResult[0].id;
+                    
+                    // Save choices
+                    if (q.choices && q.choices.length > 0) {
+                        for (let j = 0; j < q.choices.length; j++) {
+                            const choiceData = {
+                                question_id: questionId,
+                                choice_text: q.choices[j],
+                                is_correct: (j + 1) === q.correctAnswer,
+                                sort_order: j + 1
+                            };
+                            
+                            const { error: cError } = await supabaseClient
+                                .from('choices')
+                                .insert([choiceData]);
+                            
+                            if (cError) throw cError;
+                        }
+                    }
+                }
+                
+                showToast(editId ? 'Assignment updated successfully! ✅' : 'Assignment created successfully! 🎉', 'success');
                 closeModal();
                 await loadData();
                 
@@ -1207,23 +1256,25 @@
         });
 
         // ============================================
+        // EDIT ASSIGNMENT
+        // ============================================
+        function editAssignment(assignmentId) {
+            // For now, just show a message since full edit would require loading existing questions
+            showToast('Edit functionality - Please create a new assignment for now', 'info');
+        }
+
+        // ============================================
+        // VIEW ASSIGNMENT
+        // ============================================
+        function viewAssignment(assignmentId) {
+            showToast('View assignment details coming soon', 'info');
+        }
+
+        // ============================================
         // DELETE ASSIGNMENT
         // ============================================
         async function deleteAssignment(assignmentId) {
-            if (userRole === 'learner') {
-                showToast('Only teachers and admins can delete assignments', 'warning');
-                return;
-            }
-            
-            const assignment = assignments.find(a => a.id === assignmentId);
-            if (!assignment) {
-                showToast('Assignment not found', 'error');
-                return;
-            }
-            
-            if (!confirm(`Are you sure you want to delete "${assignment.title}"? This action cannot be undone.`)) {
-                return;
-            }
+            if (!confirm('Are you sure you want to delete this assignment?')) return;
             
             try {
                 const { error } = await supabaseClient
@@ -1235,11 +1286,331 @@
                 
                 showToast('Assignment deleted successfully', 'success');
                 await loadData();
-                
             } catch (error) {
                 console.error('Error deleting assignment:', error);
                 showToast('Error deleting assignment: ' + error.message, 'error');
             }
+        }
+
+        // ============================================
+        // ATTEMPT ASSIGNMENT
+        // ============================================
+        async function attemptAssignment(assignmentId) {
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast('Assignment not found', 'error');
+                return;
+            }
+            
+            // Load questions
+            try {
+                const { data: questions, error } = await supabaseClient
+                    .from('questions')
+                    .select(`
+                        *,
+                        choices (*)
+                    `)
+                    .eq('assessment_id', assignmentId)
+                    .order('sort_order', { ascending: true });
+                
+                if (error) throw error;
+                
+                if (!questions || questions.length === 0) {
+                    showToast('No questions found for this assignment', 'error');
+                    return;
+                }
+                
+                currentAttempt = {
+                    assignment: assignment,
+                    questions: questions,
+                    answers: {},
+                    startedAt: new Date()
+                };
+                
+                currentQuestionIndex = 0;
+                timeRemaining = (assignment.time_limit || 60) * 60;
+                
+                document.getElementById('attempt-title').textContent = assignment.title;
+                document.getElementById('attempt-modal').classList.add('active');
+                
+                renderQuestion();
+                startTimer();
+                
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                showToast('Error loading questions: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // RENDER QUESTION
+        // ============================================
+        function renderQuestion() {
+            const questions = currentAttempt.questions;
+            const q = questions[currentQuestionIndex];
+            const total = questions.length;
+            
+            document.getElementById('question-progress').textContent = `Question ${currentQuestionIndex + 1} of ${total}`;
+            
+            // Show/hide navigation buttons
+            document.getElementById('prev-question').classList.toggle('hidden', currentQuestionIndex === 0);
+            document.getElementById('next-question').classList.toggle('hidden', currentQuestionIndex === total - 1);
+            
+            const content = document.getElementById('attempt-content');
+            
+            let choicesHtml = '';
+            if (q.question_type === 'multiple_choice' && q.choices) {
+                const selected = currentAttempt.answers[q.id] || null;
+                choicesHtml = q.choices.map((choice, idx) => `
+                    <div class="choice-option ${selected === idx ? 'selected' : ''}" onclick="selectChoice(${q.id}, ${idx})">
+                        <span class="w-6 h-6 rounded-full border-2 ${selected === idx ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center text-xs font-bold">
+                            ${String.fromCharCode(65 + idx)}
+                        </span>
+                        <span class="text-gray-700 dark:text-gray-300">${choice.choice_text}</span>
+                    </div>
+                `).join('');
+            } else if (q.question_type === 'true_false') {
+                const selected = currentAttempt.answers[q.id] || null;
+                const trueFalseOptions = ['True', 'False'];
+                choicesHtml = trueFalseOptions.map((text, idx) => `
+                    <div class="choice-option ${selected === idx ? 'selected' : ''}" onclick="selectChoice(${q.id}, ${idx})">
+                        <span class="w-6 h-6 rounded-full border-2 ${selected === idx ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 dark:border-gray-600'} flex items-center justify-center text-xs font-bold">
+                            ${idx === 0 ? 'T' : 'F'}
+                        </span>
+                        <span class="text-gray-700 dark:text-gray-300">${text}</span>
+                    </div>
+                `).join('');
+            } else {
+                const answer = currentAttempt.answers[q.id] || '';
+                choicesHtml = `
+                    <textarea rows="4" onchange="saveShortAnswer(${q.id}, this.value)" 
+                              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">${answer}</textarea>
+                `;
+            }
+            
+            content.innerHTML = `
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">${q.question_type.replace('_', ' ').toUpperCase()}</span>
+                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">${q.marks} marks</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${q.question_text}</h3>
+                </div>
+                <div class="space-y-2">
+                    ${choicesHtml}
+                </div>
+            `;
+        }
+
+        // ============================================
+        // SELECT CHOICE
+        // ============================================
+        function selectChoice(questionId, choiceIndex) {
+            currentAttempt.answers[questionId] = choiceIndex;
+            renderQuestion();
+        }
+
+        // ============================================
+        // SAVE SHORT ANSWER
+        // ============================================
+        function saveShortAnswer(questionId, value) {
+            currentAttempt.answers[questionId] = value;
+        }
+
+        // ============================================
+        // CHANGE QUESTION
+        // ============================================
+        function changeQuestion(delta) {
+            const newIndex = currentQuestionIndex + delta;
+            if (newIndex >= 0 && newIndex < currentAttempt.questions.length) {
+                currentQuestionIndex = newIndex;
+                renderQuestion();
+            }
+        }
+
+        // ============================================
+        // START TIMER
+        // ============================================
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                document.getElementById('attempt-timer').textContent = `⏱ ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    showToast('Time is up! Submitting automatically...', 'warning');
+                    submitAssignment();
+                }
+            }, 1000);
+        }
+
+        // ============================================
+        // SUBMIT ASSIGNMENT
+        // ============================================
+        async function submitAssignment() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            if (!confirm('Are you sure you want to submit this assignment?')) {
+                startTimer();
+                return;
+            }
+            
+            const questions = currentAttempt.questions;
+            let totalScore = 0;
+            let totalPossible = 0;
+            let results = [];
+            
+            questions.forEach(q => {
+                const marks = q.marks || 1;
+                totalPossible += marks;
+                
+                const userAnswer = currentAttempt.answers[q.id];
+                let isCorrect = false;
+                let correctAnswer = null;
+                
+                if (q.question_type === 'multiple_choice' || q.question_type === 'true_false') {
+                    const correctChoice = q.choices?.findIndex(c => c.is_correct) ?? -1;
+                    correctAnswer = correctChoice >= 0 ? correctChoice : null;
+                    isCorrect = userAnswer === correctAnswer;
+                } else {
+                    // For short answer and essay, we need manual grading
+                    // For now, mark as pending
+                    isCorrect = false;
+                }
+                
+                if (isCorrect) {
+                    totalScore += marks;
+                }
+                
+                results.push({
+                    questionId: q.id,
+                    questionText: q.question_text,
+                    userAnswer: userAnswer,
+                    correctAnswer: correctAnswer,
+                    isCorrect: isCorrect,
+                    marks: marks,
+                    earnedMarks: isCorrect ? marks : 0
+                });
+            });
+            
+            const percentage = totalPossible > 0 ? (totalScore / totalPossible) * 100 : 0;
+            const passed = percentage >= (currentAttempt.assignment.passing_mark || 50);
+            const grade = percentage >= 80 ? 'A' : percentage >= 70 ? 'B' : percentage >= 60 ? 'C' : percentage >= 50 ? 'D' : 'F';
+            
+            try {
+                // Save submission
+                const { data: submission, error } = await supabaseClient
+                    .from('submissions')
+                    .insert([{
+                        assessment_id: currentAttempt.assignment.id,
+                        learner_id: currentUser.id,
+                        submitted_at: new Date().toISOString(),
+                        status: 'graded',
+                        total_score: totalScore,
+                        total_marks: totalPossible,
+                        percentage: percentage,
+                        grade: grade,
+                        passed: passed,
+                        time_taken: Math.floor((new Date() - currentAttempt.startedAt) / 1000)
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                // Save answers
+                for (const result of results) {
+                    await supabaseClient
+                        .from('answers')
+                        .insert([{
+                            submission_id: submission[0].id,
+                            question_id: result.questionId,
+                            answer_text: typeof result.userAnswer === 'number' ? String.fromCharCode(65 + result.userAnswer) : result.userAnswer,
+                            is_correct: result.isCorrect,
+                            score: result.earnedMarks
+                        }]);
+                }
+                
+                closeAttemptModal();
+                showToast('Assignment submitted successfully! 🎉', 'success');
+                showResults(results, totalScore, totalPossible, percentage, grade, passed);
+                
+                await loadData();
+                
+            } catch (error) {
+                console.error('Error submitting assignment:', error);
+                showToast('Error submitting assignment: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // SHOW RESULTS
+        // ============================================
+        function showResults(results, totalScore, totalPossible, percentage, grade, passed) {
+            const content = document.getElementById('results-content');
+            content.innerHTML = `
+                <div class="gradient-bg rounded-2xl p-6 text-white text-center">
+                    <div class="text-5xl font-bold mb-2">${percentage.toFixed(0)}%</div>
+                    <div class="text-2xl font-bold mb-1">Grade: ${grade}</div>
+                    <div class="text-lg">${passed ? '✅ PASSED' : '❌ FAILED'}</div>
+                    <div class="text-sm opacity-80 mt-2">${totalScore} / ${totalPossible} marks</div>
+                </div>
+                
+                <div class="space-y-3 max-h-96 overflow-y-auto">
+                    ${results.map((r, idx) => `
+                        <div class="p-4 rounded-xl ${r.isCorrect ? 'correct-answer' : 'wrong-answer'} bg-gray-50 dark:bg-gray-800">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Question ${idx + 1}</div>
+                                    <div class="text-gray-900 dark:text-white">${r.questionText}</div>
+                                    <div class="text-sm mt-1">
+                                        <span class="text-gray-500 dark:text-gray-400">Your answer: </span>
+                                        <span class="font-medium">${typeof r.userAnswer === 'number' ? String.fromCharCode(65 + r.userAnswer) : r.userAnswer || 'Not answered'}</span>
+                                        ${r.correctAnswer !== null && r.correctAnswer !== undefined ? `
+                                            <span class="text-gray-500 dark:text-gray-400 ml-2">Correct: </span>
+                                            <span class="font-medium text-green-600 dark:text-green-400">${typeof r.correctAnswer === 'number' ? String.fromCharCode(65 + r.correctAnswer) : r.correctAnswer}</span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold ${r.isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                                        ${r.earnedMarks} / ${r.marks}
+                                    </div>
+                                    <div class="text-sm ${r.isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                                        ${r.isCorrect ? '✅' : '❌'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <button onclick="closeResultsModal()" class="w-full btn-primary py-3 rounded-xl text-white font-semibold">
+                    Close
+                </button>
+            `;
+            
+            document.getElementById('results-modal').classList.add('active');
+        }
+
+        // ============================================
+        // CLOSE MODALS
+        // ============================================
+        function closeModal() {
+            document.getElementById('assignment-modal').classList.remove('active');
+        }
+
+        function closeAttemptModal() {
+            document.getElementById('attempt-modal').classList.remove('active');
+            if (timerInterval) clearInterval(timerInterval);
+            currentAttempt = null;
+        }
+
+        function closeResultsModal() {
+            document.getElementById('results-modal').classList.remove('active');
         }
 
         // ============================================
@@ -1271,15 +1642,13 @@
         // CLOSE MODAL ON OVERLAY CLICK
         // ============================================
         document.getElementById('assignment-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
+            if (e.target === this) closeModal();
         });
-        
-        document.getElementById('view-assignment-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeViewModal();
-            }
+        document.getElementById('attempt-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeAttemptModal();
+        });
+        document.getElementById('results-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeResultsModal();
         });
 
         // ============================================
@@ -1288,7 +1657,8 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
-                closeViewModal();
+                closeAttemptModal();
+                closeResultsModal();
             }
         });
 
@@ -1298,13 +1668,9 @@
         (async function init() {
             console.log('🚀 CastroEduConnect Assignments Page Loading...');
             
-            // Init dark mode
             initDarkMode();
-            
-            // Setup dark mode toggle
             document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
             
-            // Check authentication
             const isAuth = await checkAuth();
             
             if (!isAuth) {
