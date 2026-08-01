@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assignments - CastroEduConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
+            </div>
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
+                <a href="subjects.html" class="sidebar-link"><i class="fas fa-book w-5"></i> Subjects</a>
+                <a href="assignments.html" class="sidebar-link active"><i class="fas fa-tasks w-5"></i> Assignments</a>
+                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
+                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
+                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
+                <a href="announcements.html" class="sidebar-link"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+                <a href="profile.html" class="sidebar-link"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="settings.html" class="sidebar-link"><i class="fas fa-cog w-5"></i> Settings</a>
+                <a href="login.html" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 min-h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
+                <div class="flex-1 max-w-xl mx-4"><div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Search assignments..." class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white" /></div></div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative text-gray-600 dark:text-gray-300"><i class="fas fa-bell text-xl"></i><span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">3</span></button>
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="flex items-center space-x-3"><div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">JD</div><div class="hidden sm:block"><div class="text-sm font-semibold text-gray-900 dark:text-white">John Doe</div><div class="text-xs text-gray-500 dark:text-gray-400">Learner</div></div></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Assignments</h1>
+                <div class="flex items-center space-x-3">
+                    <select class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option>All Subjects</option>
+                        <option>Mathematics</option>
+                        <option>English</option>
+                        <option>Science</option>
+                    </select>
+                    <button class="btn-primary px-6 py-2 rounded-xl text-white font-semibold"><i class="fas fa-plus mr-2"></i>Create Assignment</button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-full">Mathematics</span>
+                                <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 text-xs font-semibold rounded-full">Due in 2 days</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-2">Algebra: Linear Equations</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Complete the following problems and submit your work. Show all steps.</p>
+                            <div class="flex items-center space-x-6 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                                <span><i class="fas fa-calendar mr-1"></i> Due: Dec 15, 2026</span>
+                                <span><i class="fas fa-clock mr-1"></i> Time: 45 min</span>
+                                <span><i class="fas fa-check-circle mr-1"></i> Status: In Progress</span>
+                            </div>
+                        </div>
+                        <button class="btn-primary px-6 py-2 rounded-xl text-white font-semibold text-sm">Continue</button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-semibold rounded-full">English</span>
+                                <span class="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full">Overdue</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-2">Essay: The Great Gatsby</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Write a 500-word essay analyzing the themes in The Great Gatsby.</p>
+                            <div class="flex items-center space-x-6 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                                <span><i class="fas fa-calendar mr-1"></i> Due: Dec 10, 2026</span>
+                                <span><i class="fas fa-clock mr-1"></i> Time: 60 min</span>
+                                <span><i class="fas fa-exclamation-circle mr-1 text-red-500"></i> Status: Overdue</span>
+                            </div>
+                        </div>
+                        <button class="btn-secondary px-6 py-2 rounded-xl font-semibold text-sm">Submit Now</button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-semibold rounded-full">Science</span>
+                                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-semibold rounded-full">Completed</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-2">Lab Report: Photosynthesis</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Submit your lab report including observations, data, and conclusions.</p>
+                            <div class="flex items-center space-x-6 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                                <span><i class="fas fa-calendar mr-1"></i> Due: Dec 5, 2026</span>
+                                <span><i class="fas fa-clock mr-1"></i> Time: 30 min</span>
+                                <span><i class="fas fa-check-circle mr-1 text-green-500"></i> Status: Submitted</span>
+                            </div>
+                        </div>
+                        <button class="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-xl font-semibold text-sm cursor-default">View Grade</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+    </script>
+</body>
+</html>

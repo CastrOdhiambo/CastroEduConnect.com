@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - CastroEduConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
+            </div>
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
+                <a href="subjects.html" class="sidebar-link"><i class="fas fa-book w-5"></i> Subjects</a>
+                <a href="assignments.html" class="sidebar-link"><i class="fas fa-tasks w-5"></i> Assignments</a>
+                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
+                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
+                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
+                <a href="announcements.html" class="sidebar-link"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+                <a href="profile.html" class="sidebar-link active"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="settings.html" class="sidebar-link"><i class="fas fa-cog w-5"></i> Settings</a>
+                <a href="login.html" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 min-h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
+                <div class="flex-1 max-w-xl mx-4"><div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white" /></div></div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative text-gray-600 dark:text-gray-300"><i class="fas fa-bell text-xl"></i><span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">3</span></button>
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="flex items-center space-x-3"><div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">JD</div><div class="hidden sm:block"><div class="text-sm font-semibold text-gray-900 dark:text-white">John Doe</div><div class="text-xs text-gray-500 dark:text-gray-400">Learner</div></div></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-6">
+            <div class="max-w-3xl mx-auto">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm overflow-hidden">
+                    <div class="gradient-bg h-32"></div>
+                    <div class="relative px-6 pb-6">
+                        <div class="flex justify-center -mt-16 mb-4">
+                            <div class="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <i class="fas fa-user text-6xl text-gray-400 dark:text-gray-500"></i>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">John Doe</h2>
+                            <p class="text-gray-500 dark:text-gray-400">john.doe@example.com</p>
+                            <span class="inline-block mt-2 px-4 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium">Learner</span>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-3 gap-4 mt-6">
+                            <div class="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                <div class="text-lg font-bold text-gray-900 dark:text-white">6</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Enrolled Subjects</div>
+                            </div>
+                            <div class="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                <div class="text-lg font-bold text-gray-900 dark:text-white">78%</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Average Score</div>
+                            </div>
+                            <div class="text-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                <div class="text-lg font-bold text-gray-900 dark:text-white">12</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Completed</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profile Information</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                    <i class="fas fa-user text-blue-600 dark:text-blue-400 text-xl mt-1"></i>
+                                    <div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">Full Name</p>
+                                        <p class="text-gray-900 dark:text-white font-medium">John Doe</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                    <i class="fas fa-envelope text-blue-600 dark:text-blue-400 text-xl mt-1"></i>
+                                    <div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                                        <p class="text-gray-900 dark:text-white font-medium">john.doe@example.com</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                                    <i class="fas fa-graduation-cap text-blue-600 dark:text-blue-400 text-xl mt-1"></i>
+                                    <div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">Grade</p>
+                                        <p class="text-gray-900 dark:text-white font-medium">Grade 1</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 flex space-x-4">
+                                <button class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold"><i class="fas fa-edit mr-2"></i>Edit Profile</button>
+                                <button class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition"><i class="fas fa-key mr-2"></i>Change Password</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+    </script>
+</body>
+</html>
