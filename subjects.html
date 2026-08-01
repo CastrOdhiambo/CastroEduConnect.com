@@ -273,7 +273,7 @@
                     </select>
                     <select id="filter-status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="">All Status</option>
-                        <option value="active">Enrolled</option>
+                        <option value="enrolled">Enrolled</option>
                         <option value="available">Available</option>
                     </select>
                 </div>
@@ -655,7 +655,12 @@
                     .select('*')
                     .eq('learner_id', currentUser.id);
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error loading enrollments:', error);
+                    enrollments = [];
+                    return [];
+                }
+                
                 enrollments = data || [];
                 console.log('📋 Enrollments loaded:', enrollments.length);
                 return enrollments;
@@ -667,7 +672,7 @@
         }
 
         // ============================================
-        // ENROLL IN SUBJECT
+        // ENROLL IN SUBJECT - FIXED WITH BETTER ERROR HANDLING
         // ============================================
         async function enrollSubject(subjectId) {
             try {
@@ -678,23 +683,45 @@
                     return;
                 }
                 
+                console.log('📝 Enrolling in subject:', subjectId);
+                console.log('👤 User ID:', currentUser.id);
+                
+                // Prepare enrollment data
+                const enrollmentData = {
+                    subject_id: subjectId,
+                    learner_id: currentUser.id,
+                    status: 'active',
+                    enrolled_at: new Date().toISOString()
+                };
+                
+                console.log('📤 Enrollment data:', enrollmentData);
+                
                 const { data, error } = await supabaseClient
                     .from('subject_enrollments')
-                    .insert([{
-                        subject_id: subjectId,
-                        learner_id: currentUser.id,
-                        status: 'active'
-                    }])
+                    .insert([enrollmentData])
                     .select();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Enrollment error details:', error);
+                    
+                    // Handle specific error cases
+                    if (error.message.includes('violates row-level security policy')) {
+                        showToast('⚠️ RLS policy error. Please contact admin to set up RLS policies.', 'error');
+                    } else if (error.message.includes('duplicate key')) {
+                        showToast('You are already enrolled in this subject', 'warning');
+                    } else {
+                        showToast('Error enrolling: ' + error.message, 'error');
+                    }
+                    return;
+                }
                 
+                console.log('✅ Enrollment successful:', data);
                 showToast('🎉 Successfully enrolled in subject!', 'success');
                 await loadEnrollments();
                 applyFilters();
                 
             } catch (error) {
-                console.error('Error enrolling:', error);
+                console.error('❌ Enrollment error:', error);
                 showToast('Error enrolling: ' + error.message, 'error');
             }
         }
@@ -712,7 +739,11 @@
                     .eq('subject_id', subjectId)
                     .eq('learner_id', currentUser.id);
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error dropping subject:', error);
+                    showToast('Error dropping subject: ' + error.message, 'error');
+                    return;
+                }
                 
                 showToast('Subject dropped successfully', 'info');
                 await loadEnrollments();
@@ -752,7 +783,7 @@
             if (statusFilter && userRole === 'learner') {
                 filteredSubjects = filteredSubjects.filter(s => {
                     const isEnrolled = enrollments.some(e => e.subject_id === s.id);
-                    if (statusFilter === 'active') return isEnrolled;
+                    if (statusFilter === 'enrolled') return isEnrolled;
                     if (statusFilter === 'available') return !isEnrolled;
                     return true;
                 });
