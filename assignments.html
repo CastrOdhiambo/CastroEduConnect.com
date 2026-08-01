@@ -8,122 +8,1313 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: #6b7280;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .sidebar-link:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: #2563EB;
+        }
+        .sidebar-link.active {
+            background: linear-gradient(135deg, #2563EB, #4F46E5);
+            color: white;
+        }
+        .dark .sidebar-link {
+            color: #9ca3af;
+        }
+        .dark .sidebar-link:hover {
+            background: rgba(37, 99, 235, 0.2);
+            color: #60a5fa;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #2563EB 0%, #4F46E5 50%, #7C3AED 100%);
+        }
+        
+        .assignment-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border-left: 4px solid #2563EB;
+        }
+        .assignment-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
+        }
+        .dark .assignment-card {
+            background: #1a1a2e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            color: white;
+            animation: slideInRight 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 300px;
+            max-width: 450px;
+        }
+        .toast-success { background: #10B981; }
+        .toast-error { background: #EF4444; }
+        .toast-warning { background: #F59E0B; }
+        .toast-info { background: #3B82F6; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 9998;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalPop 0.3s ease;
+        }
+        .dark .modal-content {
+            background: #1a1a2e;
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-draft { background: #E5E7EB; color: #6B7280; }
+        .status-published { background: #DBEAFE; color: #2563EB; }
+        .status-active { background: #D1FAE5; color: #059669; }
+        .status-closed { background: #FEE2E2; color: #DC2626; }
+        .status-archived { background: #F3F4F6; color: #9CA3AF; }
+        .dark .status-draft { background: #374151; color: #9CA3AF; }
+        .dark .status-published { background: #1E3A5F; color: #60A5FA; }
+        .dark .status-active { background: #065F46; color: #34D399; }
+        .dark .status-closed { background: #7F1D1D; color: #F87171; }
+        .dark .status-archived { background: #1F2937; color: #6B7280; }
+    </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Sidebar -->
     <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
         <div class="p-6">
             <div class="flex items-center space-x-3 mb-8">
-                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                    <i class="fas fa-graduation-cap text-white text-xl"></i>
+                </div>
                 <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
             </div>
+            
             <nav class="space-y-1">
-                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
-                <a href="subjects.html" class="sidebar-link"><i class="fas fa-book w-5"></i> Subjects</a>
-                <a href="assignments.html" class="sidebar-link active"><i class="fas fa-tasks w-5"></i> Assignments</a>
-                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
-                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
-                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
-                <a href="announcements.html" class="sidebar-link"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
-                <a href="profile.html" class="sidebar-link"><i class="fas fa-user w-5"></i> Profile</a>
-                <a href="settings.html" class="sidebar-link"><i class="fas fa-cog w-5"></i> Settings</a>
-                <a href="login.html" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+                <a href="dashboard.html" class="sidebar-link">
+                    <i class="fas fa-th-large w-5"></i> Dashboard
+                </a>
+                <a href="subjects.html" class="sidebar-link">
+                    <i class="fas fa-book w-5"></i> Subjects
+                </a>
+                <a href="assignments.html" class="sidebar-link active">
+                    <i class="fas fa-tasks w-5"></i> Assignments
+                </a>
+                <a href="assessments.html" class="sidebar-link">
+                    <i class="fas fa-question-circle w-5"></i> Assessments
+                </a>
+                <a href="results.html" class="sidebar-link">
+                    <i class="fas fa-chart-bar w-5"></i> Results
+                </a>
+                <a href="resources.html" class="sidebar-link">
+                    <i class="fas fa-folder w-5"></i> Resources
+                </a>
+                <a href="announcements.html" class="sidebar-link">
+                    <i class="fas fa-bullhorn w-5"></i> Announcements
+                </a>
+                <a href="profile.html" class="sidebar-link">
+                    <i class="fas fa-user w-5"></i> Profile
+                </a>
+                <a href="settings.html" class="sidebar-link">
+                    <i class="fas fa-cog w-5"></i> Settings
+                </a>
+                <button onclick="logoutUser()" class="sidebar-link w-full text-left text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <i class="fas fa-sign-out-alt w-5"></i> Logout
+                </button>
             </nav>
         </div>
     </aside>
 
+    <!-- Main Content -->
     <main class="md:ml-64 min-h-screen">
-        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+        <!-- Top Bar -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between px-6 py-4">
-                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
-                <div class="flex-1 max-w-xl mx-4"><div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="Search assignments..." class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white" /></div></div>
                 <div class="flex items-center space-x-4">
-                    <button class="relative text-gray-600 dark:text-gray-300"><i class="fas fa-bell text-xl"></i><span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">3</span></button>
-                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
-                    <div class="flex items-center space-x-3"><div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">JD</div><div class="hidden sm:block"><div class="text-sm font-semibold text-gray-900 dark:text-white">John Doe</div><div class="text-xs text-gray-500 dark:text-gray-400">Learner</div></div></div>
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Assignments</h1>
+                </div>
+                
+                <div class="flex-1 max-w-xl mx-4">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="Search assignments..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white" />
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 text-xl">
+                        <i id="dark-mode-icon" class="fas fa-moon"></i>
+                    </button>
+                    <button onclick="showToast('You have 3 new notifications', 'info')" 
+                            class="relative text-gray-600 dark:text-gray-300 hover:text-blue-600">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">3</span>
+                    </button>
+                    <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='profile.html'">
+                        <div id="user-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="hidden sm:block">
+                            <div id="user-name" class="text-sm font-semibold text-gray-900 dark:text-white">Loading...</div>
+                            <div id="user-role" class="text-xs text-gray-500 dark:text-gray-400">Loading...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
+        <!-- Content -->
         <div class="p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Assignments</h1>
-                <div class="flex items-center space-x-3">
-                    <select class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                        <option>All Subjects</option>
-                        <option>Mathematics</option>
-                        <option>English</option>
-                        <option>Science</option>
+            <!-- Actions -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="filter-subject" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">All Subjects</option>
                     </select>
-                    <button class="btn-primary px-6 py-2 rounded-xl text-white font-semibold"><i class="fas fa-plus mr-2"></i>Create Assignment</button>
+                    <select id="filter-status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">All Status</option>
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                        <option value="active">Active</option>
+                        <option value="closed">Closed</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                    <select id="filter-type" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">All Types</option>
+                        <option value="assignment">Assignment</option>
+                        <option value="quiz">Quiz</option>
+                        <option value="cat">CAT</option>
+                        <option value="exam">Exam</option>
+                    </select>
+                </div>
+                <button id="create-assignment-btn" onclick="openCreateAssignmentModal()" 
+                        class="btn-primary px-6 py-2 rounded-xl text-white font-semibold flex items-center space-x-2 hidden">
+                    <i class="fas fa-plus"></i> <span>Create Assignment</span>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats-container">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="stat-total">0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Total</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400" id="stat-pending">0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Pending</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="stat-submitted">0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Submitted</div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm text-center">
+                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" id="stat-graded">0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Graded</div>
                 </div>
             </div>
 
-            <div class="space-y-4">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3">
-                                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-full">Mathematics</span>
-                                <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 text-xs font-semibold rounded-full">Due in 2 days</span>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-2">Algebra: Linear Equations</h3>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Complete the following problems and submit your work. Show all steps.</p>
-                            <div class="flex items-center space-x-6 mt-3 text-sm text-gray-500 dark:text-gray-400">
-                                <span><i class="fas fa-calendar mr-1"></i> Due: Dec 15, 2026</span>
-                                <span><i class="fas fa-clock mr-1"></i> Time: 45 min</span>
-                                <span><i class="fas fa-check-circle mr-1"></i> Status: In Progress</span>
-                            </div>
-                        </div>
-                        <button class="btn-primary px-6 py-2 rounded-xl text-white font-semibold text-sm">Continue</button>
+            <!-- Assignments List -->
+            <div id="assignments-container" class="space-y-4">
+                <!-- Loading Skeletons -->
+                <div class="assignment-card">
+                    <div class="skeleton h-6 w-3/4 mb-2"></div>
+                    <div class="skeleton h-4 w-1/2 mb-4"></div>
+                    <div class="flex gap-4">
+                        <div class="skeleton h-4 w-1/4"></div>
+                        <div class="skeleton h-4 w-1/4"></div>
+                        <div class="skeleton h-4 w-1/4"></div>
                     </div>
                 </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3">
-                                <span class="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-semibold rounded-full">English</span>
-                                <span class="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full">Overdue</span>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-2">Essay: The Great Gatsby</h3>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Write a 500-word essay analyzing the themes in The Great Gatsby.</p>
-                            <div class="flex items-center space-x-6 mt-3 text-sm text-gray-500 dark:text-gray-400">
-                                <span><i class="fas fa-calendar mr-1"></i> Due: Dec 10, 2026</span>
-                                <span><i class="fas fa-clock mr-1"></i> Time: 60 min</span>
-                                <span><i class="fas fa-exclamation-circle mr-1 text-red-500"></i> Status: Overdue</span>
-                            </div>
-                        </div>
-                        <button class="btn-secondary px-6 py-2 rounded-xl font-semibold text-sm">Submit Now</button>
+                <div class="assignment-card">
+                    <div class="skeleton h-6 w-3/4 mb-2"></div>
+                    <div class="skeleton h-4 w-1/2 mb-4"></div>
+                    <div class="flex gap-4">
+                        <div class="skeleton h-4 w-1/4"></div>
+                        <div class="skeleton h-4 w-1/4"></div>
+                        <div class="skeleton h-4 w-1/4"></div>
                     </div>
                 </div>
-
-                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3">
-                                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-semibold rounded-full">Science</span>
-                                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-semibold rounded-full">Completed</span>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-2">Lab Report: Photosynthesis</h3>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Submit your lab report including observations, data, and conclusions.</p>
-                            <div class="flex items-center space-x-6 mt-3 text-sm text-gray-500 dark:text-gray-400">
-                                <span><i class="fas fa-calendar mr-1"></i> Due: Dec 5, 2026</span>
-                                <span><i class="fas fa-clock mr-1"></i> Time: 30 min</span>
-                                <span><i class="fas fa-check-circle mr-1 text-green-500"></i> Status: Submitted</span>
-                            </div>
-                        </div>
-                        <button class="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-xl font-semibold text-sm cursor-default">View Grade</button>
+                <div class="assignment-card">
+                    <div class="skeleton h-6 w-3/4 mb-2"></div>
+                    <div class="skeleton h-4 w-1/2 mb-4"></div>
+                    <div class="flex gap-4">
+                        <div class="skeleton h-4 w-1/4"></div>
+                        <div class="skeleton h-4 w-1/4"></div>
+                        <div class="skeleton h-4 w-1/4"></div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <script src="script.js"></script>
+    <!-- Create/Edit Assignment Modal -->
+    <div id="assignment-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-900 dark:text-white">Create Assignment</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="assignment-form">
+                <input type="hidden" id="edit-assignment-id" />
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
+                        <input type="text" id="assignment-title" required 
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                        <textarea id="assignment-description" rows="3" 
+                                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject *</label>
+                            <select id="assignment-subject" required 
+                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <option value="">Select Subject</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type *</label>
+                            <select id="assignment-type" required 
+                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <option value="assignment">Assignment</option>
+                                <option value="quiz">Quiz</option>
+                                <option value="cat">CAT</option>
+                                <option value="exam">Exam</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Opening Date</label>
+                            <input type="datetime-local" id="assignment-opening" 
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Closing Date</label>
+                            <input type="datetime-local" id="assignment-closing" 
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Marks</label>
+                            <input type="number" id="assignment-marks" value="100" 
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Passing Mark</label>
+                            <input type="number" id="assignment-passing" value="50" 
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Limit (minutes)</label>
+                        <input type="number" id="assignment-time-limit" value="60" 
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="assignment-randomize" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Randomize Questions</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="assignment-shuffle" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Shuffle Answers</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" id="save-assignment-btn" 
+                            class="w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg">
+                        <i class="fas fa-save mr-2"></i> Save Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Assignment Modal -->
+    <div id="view-assignment-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="view-title" class="text-2xl font-bold text-gray-900 dark:text-white">Assignment Details</h2>
+                <button onclick="closeViewModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="view-content" class="space-y-4">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
     <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client initialized');
+
+        // ============================================
+        // STATE
+        // ============================================
+        let currentUser = null;
+        let userProfile = null;
+        let userRole = 'learner';
+        let assignments = [];
+        let subjects = [];
+        let submissions = [];
+
+        // ============================================
+        // TOAST NOTIFICATIONS
+        // ============================================
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : ''}
+                        ${type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : ''}
+                        ${type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
+                        ${type === 'info' ? '<i class="fas fa-info-circle"></i>' : ''}
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white/80 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // ============================================
+        // SIDEBAR TOGGLE
+        // ============================================
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('-translate-x-full');
         }
+
+        // ============================================
+        // LOGOUT
+        // ============================================
+        async function logoutUser() {
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) throw error;
+                
+                showToast('Logged out successfully!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
+            } catch (error) {
+                console.error('Logout error:', error);
+                showToast('Error logging out: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // CHECK AUTHENTICATION
+        // ============================================
+        async function checkAuth() {
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                
+                if (error) throw error;
+                
+                if (!session) {
+                    console.log('No session found, redirecting to login');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                
+                currentUser = session.user;
+                console.log('✅ User authenticated:', currentUser.email);
+                
+                await fetchUserProfile();
+                updateUserUI();
+                await loadData();
+                
+                return true;
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
+        // ============================================
+        // FETCH USER PROFILE
+        // ============================================
+        async function fetchUserProfile() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (error) throw error;
+                
+                userProfile = data;
+                userRole = data.role || 'learner';
+                console.log('👤 User profile loaded:', userProfile);
+                
+                return userProfile;
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                userProfile = {
+                    first_name: currentUser.user_metadata?.first_name || 'User',
+                    last_name: currentUser.user_metadata?.last_name || '',
+                    role: currentUser.user_metadata?.role || 'learner'
+                };
+                userRole = userProfile.role;
+                return userProfile;
+            }
+        }
+
+        // ============================================
+        // UPDATE UI WITH USER INFO
+        // ============================================
+        function updateUserUI() {
+            const firstName = userProfile?.first_name || currentUser?.user_metadata?.first_name || 'User';
+            const lastName = userProfile?.last_name || currentUser?.user_metadata?.last_name || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+            
+            document.getElementById('user-name').textContent = fullName || currentUser.email;
+            const roleDisplay = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+            document.getElementById('user-role').textContent = roleDisplay;
+            
+            const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
+            document.getElementById('user-avatar').innerHTML = initials || '<i class="fas fa-user"></i>';
+            
+            // Show/hide create button based on role
+            if (userRole === 'teacher' || userRole === 'admin') {
+                document.getElementById('create-assignment-btn').classList.remove('hidden');
+            }
+        }
+
+        // ============================================
+        // LOAD DATA
+        // ============================================
+        async function loadData() {
+            try {
+                await loadSubjects();
+                await loadAssignments();
+                await loadSubmissions();
+                renderAssignments();
+                populateFilters();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showToast('Error loading assignments data', 'error');
+            }
+        }
+
+        // ============================================
+        // LOAD SUBJECTS
+        // ============================================
+        async function loadSubjects() {
+            try {
+                let query = supabaseClient
+                    .from('subjects')
+                    .select('*');
+                
+                // If learner, only show enrolled subjects
+                if (userRole === 'learner') {
+                    const { data: enrolls, error: enrollError } = await supabaseClient
+                        .from('subject_enrollments')
+                        .select('subject_id')
+                        .eq('learner_id', currentUser.id)
+                        .eq('status', 'active');
+                    
+                    if (enrollError) throw enrollError;
+                    
+                    const subjectIds = enrolls?.map(e => e.subject_id) || [];
+                    if (subjectIds.length > 0) {
+                        query = query.in('id', subjectIds);
+                    } else {
+                        subjects = [];
+                        return;
+                    }
+                } else {
+                    // Teachers see their subjects
+                    query = query.eq('teacher_id', currentUser.id);
+                }
+                
+                const { data, error } = await query;
+                
+                if (error) throw error;
+                subjects = data || [];
+                console.log('📚 Subjects loaded:', subjects.length);
+                return subjects;
+            } catch (error) {
+                console.error('Error loading subjects:', error);
+                subjects = [];
+                return [];
+            }
+        }
+
+        // ============================================
+        // LOAD ASSIGNMENTS
+        // ============================================
+        async function loadAssignments() {
+            try {
+                let query = supabaseClient
+                    .from('assessments')
+                    .select(`
+                        *,
+                        subjects (name, code, color),
+                        profiles (first_name, last_name)
+                    `);
+                
+                // If learner, only show published/active assignments from enrolled subjects
+                if (userRole === 'learner') {
+                    const subjectIds = subjects.map(s => s.id);
+                    if (subjectIds.length > 0) {
+                        query = query.in('subject_id', subjectIds);
+                    } else {
+                        assignments = [];
+                        return;
+                    }
+                } else {
+                    // Teachers see their assignments
+                    query = query.eq('teacher_id', currentUser.id);
+                }
+                
+                const { data, error } = await query.order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                assignments = data || [];
+                console.log('📝 Assignments loaded:', assignments.length);
+                return assignments;
+            } catch (error) {
+                console.error('Error loading assignments:', error);
+                assignments = [];
+                return [];
+            }
+        }
+
+        // ============================================
+        // LOAD SUBMISSIONS
+        // ============================================
+        async function loadSubmissions() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('submissions')
+                    .select('*')
+                    .eq('learner_id', currentUser.id);
+                
+                if (error) throw error;
+                submissions = data || [];
+                console.log('📋 Submissions loaded:', submissions.length);
+                return submissions;
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+                submissions = [];
+                return [];
+            }
+        }
+
+        // ============================================
+        // RENDER ASSIGNMENTS
+        // ============================================
+        function renderAssignments() {
+            const container = document.getElementById('assignments-container');
+            
+            if (!assignments || assignments.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-tasks text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">No Assignments Found</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mt-2">
+                            ${userRole === 'learner' ? 'No assignments available for your enrolled subjects.' : 'You haven\'t created any assignments yet.'}
+                        </p>
+                        ${userRole !== 'learner' ? `
+                            <button onclick="openCreateAssignmentModal()" class="mt-4 btn-primary px-6 py-2 rounded-xl text-white font-semibold">
+                                <i class="fas fa-plus mr-2"></i> Create First Assignment
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = assignments.map(assignment => {
+                const subject = assignment.subjects;
+                const teacher = assignment.profiles;
+                const submission = submissions.find(s => s.assessment_id === assignment.id);
+                
+                const statusColors = {
+                    'draft': 'status-draft',
+                    'published': 'status-published',
+                    'active': 'status-active',
+                    'closed': 'status-closed',
+                    'archived': 'status-archived'
+                };
+                
+                const submissionStatus = submission?.status || 'not_submitted';
+                const submissionBadge = {
+                    'not_submitted': '<span class="text-sm text-gray-500 dark:text-gray-400">Not Submitted</span>',
+                    'in_progress': '<span class="text-sm text-yellow-600 dark:text-yellow-400">📝 In Progress</span>',
+                    'submitted': '<span class="text-sm text-blue-600 dark:text-blue-400">⏳ Pending Review</span>',
+                    'graded': `<span class="text-sm text-green-600 dark:text-green-400">✅ Graded: ${Math.round(submission?.percentage || 0)}%</span>`,
+                    'returned': `<span class="text-sm text-purple-600 dark:text-purple-400">📊 Returned: ${Math.round(submission?.percentage || 0)}%</span>`
+                };
+                
+                const isOverdue = assignment.closing_date && new Date(assignment.closing_date) < new Date();
+                const dueDate = assignment.closing_date ? new Date(assignment.closing_date).toLocaleDateString() : 'No due date';
+                const daysUntil = assignment.closing_date ? getDaysUntil(assignment.closing_date) : null;
+                
+                return `
+                    <div class="assignment-card" style="border-left-color: ${subject?.color || '#2563EB'}">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background: ${subject?.color || '#2563EB'}20; color: ${subject?.color || '#2563EB'}">
+                                        ${subject?.name || 'No Subject'}
+                                    </span>
+                                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                        ${assignment.assessment_type?.toUpperCase() || 'Assignment'}
+                                    </span>
+                                    <span class="status-badge ${statusColors[assignment.status] || 'status-draft'}">
+                                        ${assignment.status || 'Draft'}
+                                    </span>
+                                    ${isOverdue && assignment.status !== 'closed' ? 
+                                        '<span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">⚠️ Overdue</span>' : ''}
+                                </div>
+                                
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">${assignment.title}</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${assignment.description || 'No description'}</p>
+                                
+                                <div class="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
+                                    <span><i class="fas fa-user mr-1"></i> ${teacher?.first_name || 'Unknown'} ${teacher?.last_name || ''}</span>
+                                    <span><i class="fas fa-calendar mr-1"></i> Due: ${dueDate}</span>
+                                    ${daysUntil !== null ? `<span class="${daysUntil <= 2 ? 'text-red-500 font-semibold' : ''}">${daysUntil} days left</span>` : ''}
+                                    <span><i class="fas fa-star mr-1"></i> ${assignment.total_marks || 0} marks</span>
+                                    <span><i class="fas fa-clock mr-1"></i> ${assignment.time_limit || 0} min</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col items-end gap-2">
+                                <div class="text-right">
+                                    ${submissionBadge[submissionStatus] || submissionBadge['not_submitted']}
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="viewAssignment('${assignment.id}')" 
+                                            class="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition font-medium text-sm">
+                                        <i class="fas fa-eye mr-1"></i> View
+                                    </button>
+                                    ${userRole !== 'learner' ? `
+                                        <button onclick="editAssignment('${assignment.id}')" 
+                                                class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium text-sm">
+                                            <i class="fas fa-edit mr-1"></i> Edit
+                                        </button>
+                                        <button onclick="deleteAssignment('${assignment.id}')" 
+                                                class="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition font-medium text-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    ` : (submissionStatus === 'not_submitted' && !isOverdue ? `
+                                        <button onclick="startAssignment('${assignment.id}')" 
+                                                class="px-4 py-2 btn-primary rounded-xl text-white font-semibold text-sm">
+                                            <i class="fas fa-play mr-1"></i> Start
+                                        </button>
+                                    ` : '')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // UPDATE STATS
+        // ============================================
+        function updateStats() {
+            document.getElementById('stat-total').textContent = assignments.length;
+            
+            if (userRole === 'learner') {
+                const pending = submissions.filter(s => s.status === 'in_progress' || s.status === 'submitted').length;
+                const submitted = submissions.filter(s => s.status === 'submitted').length;
+                const graded = submissions.filter(s => s.status === 'graded' || s.status === 'returned').length;
+                
+                document.getElementById('stat-pending').textContent = pending;
+                document.getElementById('stat-submitted').textContent = submitted;
+                document.getElementById('stat-graded').textContent = graded;
+            } else {
+                // For teachers, show stats about their assignments
+                const total = assignments.length;
+                const active = assignments.filter(a => a.status === 'active').length;
+                const closed = assignments.filter(a => a.status === 'closed').length;
+                
+                document.getElementById('stat-pending').textContent = active;
+                document.getElementById('stat-submitted').textContent = closed;
+                document.getElementById('stat-graded').textContent = total - active - closed;
+            }
+        }
+
+        // ============================================
+        // POPULATE FILTERS
+        // ============================================
+        function populateFilters() {
+            // Populate subject filter
+            const subjectSelect = document.getElementById('filter-subject');
+            const subjectOptions = subjectSelect.querySelectorAll('option:not([value=""])');
+            subjectOptions.forEach(opt => opt.remove());
+            
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.id;
+                option.textContent = subject.name;
+                subjectSelect.appendChild(option);
+            });
+            
+            // Populate subject dropdown in modal
+            const modalSubjectSelect = document.getElementById('assignment-subject');
+            const modalOptions = modalSubjectSelect.querySelectorAll('option:not([value=""])');
+            modalOptions.forEach(opt => opt.remove());
+            
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.id;
+                option.textContent = subject.name;
+                modalSubjectSelect.appendChild(option);
+            });
+        }
+
+        // ============================================
+        // FILTER ASSIGNMENTS
+        // ============================================
+        document.getElementById('filter-subject').addEventListener('change', filterAssignments);
+        document.getElementById('filter-status').addEventListener('change', filterAssignments);
+        document.getElementById('filter-type').addEventListener('change', filterAssignments);
+        document.getElementById('search-input').addEventListener('input', filterAssignments);
+
+        function filterAssignments() {
+            const subjectFilter = document.getElementById('filter-subject').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const typeFilter = document.getElementById('filter-type').value;
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
+            let filtered = [...assignments];
+            
+            if (subjectFilter) {
+                filtered = filtered.filter(a => a.subject_id === subjectFilter);
+            }
+            
+            if (statusFilter) {
+                filtered = filtered.filter(a => a.status === statusFilter);
+            }
+            
+            if (typeFilter) {
+                filtered = filtered.filter(a => a.assessment_type === typeFilter);
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(a => 
+                    a.title.toLowerCase().includes(searchTerm) ||
+                    (a.description && a.description.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Re-render with filtered assignments
+            const originalAssignments = assignments;
+            assignments = filtered;
+            renderAssignments();
+            assignments = originalAssignments;
+        }
+
+        // ============================================
+        // VIEW ASSIGNMENT
+        // ============================================
+        async function viewAssignment(assignmentId) {
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast('Assignment not found', 'error');
+                return;
+            }
+            
+            const subject = assignment.subjects;
+            const teacher = assignment.profiles;
+            const submission = submissions.find(s => s.assessment_id === assignmentId);
+            
+            const content = document.getElementById('view-content');
+            content.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full" style="background: ${subject?.color || '#2563EB'}20; color: ${subject?.color || '#2563EB'}">
+                            ${subject?.name || 'No Subject'}
+                        </span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                            ${assignment.assessment_type?.toUpperCase() || 'Assignment'}
+                        </span>
+                        <span class="status-badge ${assignment.status === 'draft' ? 'status-draft' : assignment.status === 'published' ? 'status-published' : assignment.status === 'active' ? 'status-active' : assignment.status === 'closed' ? 'status-closed' : 'status-archived'}">
+                            ${assignment.status || 'Draft'}
+                        </span>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">${assignment.title}</h3>
+                    
+                    ${assignment.description ? `<p class="text-gray-600 dark:text-gray-400">${assignment.description}</p>` : ''}
+                    
+                    <div class="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Teacher</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${teacher?.first_name || 'Unknown'} ${teacher?.last_name || ''}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Total Marks</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${assignment.total_marks || 0}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Passing Mark</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${assignment.passing_mark || 0}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Time Limit</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${assignment.time_limit || 0} minutes</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Opening Date</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${assignment.opening_date ? new Date(assignment.opening_date).toLocaleString() : 'Not set'}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Closing Date</p>
+                            <p class="font-medium text-gray-900 dark:text-white">${assignment.closing_date ? new Date(assignment.closing_date).toLocaleString() : 'Not set'}</p>
+                        </div>
+                    </div>
+                    
+                    ${submission ? `
+                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Your Submission</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Status: ${submission.status}</p>
+                            ${submission.percentage ? `<p class="text-sm text-gray-600 dark:text-gray-400">Score: ${Math.round(submission.percentage)}%</p>` : ''}
+                            ${submission.grade ? `<p class="text-sm text-gray-600 dark:text-gray-400">Grade: ${submission.grade}</p>` : ''}
+                            ${submission.teacher_comment ? `<p class="text-sm text-gray-600 dark:text-gray-400">Feedback: ${submission.teacher_comment}</p>` : ''}
+                        </div>
+                    ` : userRole === 'learner' && assignment.status === 'active' && !isOverdue(assignment.closing_date) ? `
+                        <button onclick="startAssignment('${assignment.id}')" class="w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg">
+                            <i class="fas fa-play mr-2"></i> Start Assignment
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('view-title').textContent = assignment.title;
+            document.getElementById('view-assignment-modal').classList.add('active');
+        }
+
+        // ============================================
+        // CHECK IF OVERDUE
+        // ============================================
+        function isOverdue(closingDate) {
+            return closingDate && new Date(closingDate) < new Date();
+        }
+
+        // ============================================
+        // GET DAYS UNTIL
+        // ============================================
+        function getDaysUntil(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = date - now;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // ============================================
+        // START ASSIGNMENT
+        // ============================================
+        async function startAssignment(assignmentId) {
+            try {
+                // Check if already started
+                const existing = submissions.find(s => s.assessment_id === assignmentId);
+                if (existing) {
+                    showToast('You already have a submission in progress', 'warning');
+                    return;
+                }
+                
+                // Create submission
+                const { data, error } = await supabaseClient
+                    .from('submissions')
+                    .insert([{
+                        assessment_id: assignmentId,
+                        learner_id: currentUser.id,
+                        status: 'in_progress',
+                        started_at: new Date().toISOString()
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                showToast('Assignment started! Good luck! 🍀', 'success');
+                await loadSubmissions();
+                renderAssignments();
+                
+            } catch (error) {
+                console.error('Error starting assignment:', error);
+                showToast('Error starting assignment: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // OPEN CREATE ASSIGNMENT MODAL
+        // ============================================
+        function openCreateAssignmentModal() {
+            if (userRole === 'learner') {
+                showToast('Only teachers and admins can create assignments', 'warning');
+                return;
+            }
+            
+            document.getElementById('modal-title').textContent = 'Create Assignment';
+            document.getElementById('edit-assignment-id').value = '';
+            document.getElementById('assignment-title').value = '';
+            document.getElementById('assignment-description').value = '';
+            document.getElementById('assignment-subject').value = '';
+            document.getElementById('assignment-type').value = 'assignment';
+            document.getElementById('assignment-opening').value = '';
+            document.getElementById('assignment-closing').value = '';
+            document.getElementById('assignment-marks').value = '100';
+            document.getElementById('assignment-passing').value = '50';
+            document.getElementById('assignment-time-limit').value = '60';
+            document.getElementById('assignment-randomize').checked = false;
+            document.getElementById('assignment-shuffle').checked = false;
+            document.getElementById('save-assignment-btn').innerHTML = '<i class="fas fa-save mr-2"></i> Save Assignment';
+            
+            document.getElementById('assignment-modal').classList.add('active');
+        }
+
+        // ============================================
+        // EDIT ASSIGNMENT
+        // ============================================
+        function editAssignment(assignmentId) {
+            if (userRole === 'learner') {
+                showToast('Only teachers and admins can edit assignments', 'warning');
+                return;
+            }
+            
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast('Assignment not found', 'error');
+                return;
+            }
+            
+            document.getElementById('modal-title').textContent = 'Edit Assignment';
+            document.getElementById('edit-assignment-id').value = assignment.id;
+            document.getElementById('assignment-title').value = assignment.title;
+            document.getElementById('assignment-description').value = assignment.description || '';
+            document.getElementById('assignment-subject').value = assignment.subject_id || '';
+            document.getElementById('assignment-type').value = assignment.assessment_type || 'assignment';
+            document.getElementById('assignment-opening').value = assignment.opening_date ? assignment.opening_date.slice(0, 16) : '';
+            document.getElementById('assignment-closing').value = assignment.closing_date ? assignment.closing_date.slice(0, 16) : '';
+            document.getElementById('assignment-marks').value = assignment.total_marks || 100;
+            document.getElementById('assignment-passing').value = assignment.passing_mark || 50;
+            document.getElementById('assignment-time-limit').value = assignment.time_limit || 60;
+            document.getElementById('assignment-randomize').checked = assignment.randomize_questions || false;
+            document.getElementById('assignment-shuffle').checked = assignment.shuffle_answers || false;
+            document.getElementById('save-assignment-btn').innerHTML = '<i class="fas fa-save mr-2"></i> Update Assignment';
+            
+            document.getElementById('assignment-modal').classList.add('active');
+        }
+
+        // ============================================
+        // CLOSE MODAL
+        // ============================================
+        function closeModal() {
+            document.getElementById('assignment-modal').classList.remove('active');
+        }
+
+        function closeViewModal() {
+            document.getElementById('view-assignment-modal').classList.remove('active');
+        }
+
+        // ============================================
+        // SAVE ASSIGNMENT
+        // ============================================
+        document.getElementById('assignment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const editId = document.getElementById('edit-assignment-id').value;
+            const title = document.getElementById('assignment-title').value.trim();
+            const description = document.getElementById('assignment-description').value.trim();
+            const subjectId = document.getElementById('assignment-subject').value;
+            const type = document.getElementById('assignment-type').value;
+            const openingDate = document.getElementById('assignment-opening').value;
+            const closingDate = document.getElementById('assignment-closing').value;
+            const totalMarks = parseInt(document.getElementById('assignment-marks').value) || 100;
+            const passingMark = parseInt(document.getElementById('assignment-passing').value) || 50;
+            const timeLimit = parseInt(document.getElementById('assignment-time-limit').value) || 60;
+            const randomize = document.getElementById('assignment-randomize').checked;
+            const shuffle = document.getElementById('assignment-shuffle').checked;
+            
+            if (!title || !subjectId) {
+                showToast('Please fill in all required fields', 'warning');
+                return;
+            }
+            
+            const btn = document.getElementById('save-assignment-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner spinner mr-2"></i> Saving...';
+            
+            try {
+                const assignmentData = {
+                    title,
+                    description,
+                    subject_id: subjectId,
+                    teacher_id: currentUser.id,
+                    assessment_type: type,
+                    opening_date: openingDate || null,
+                    closing_date: closingDate || null,
+                    total_marks: totalMarks,
+                    passing_mark: passingMark,
+                    time_limit: timeLimit,
+                    randomize_questions: randomize,
+                    shuffle_answers: shuffle,
+                    status: 'draft'
+                };
+                
+                let result;
+                
+                if (editId) {
+                    // Update existing assignment
+                    const { data, error } = await supabaseClient
+                        .from('assessments')
+                        .update(assignmentData)
+                        .eq('id', editId)
+                        .select();
+                    
+                    if (error) throw error;
+                    result = data;
+                    showToast('Assignment updated successfully! ✅', 'success');
+                } else {
+                    // Create new assignment
+                    const { data, error } = await supabaseClient
+                        .from('assessments')
+                        .insert([assignmentData])
+                        .select();
+                    
+                    if (error) throw error;
+                    result = data;
+                    showToast('Assignment created successfully! 🎉', 'success');
+                }
+                
+                closeModal();
+                await loadData();
+                
+            } catch (error) {
+                console.error('Error saving assignment:', error);
+                showToast('Error saving assignment: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save mr-2"></i> Save Assignment';
+            }
+        });
+
+        // ============================================
+        // DELETE ASSIGNMENT
+        // ============================================
+        async function deleteAssignment(assignmentId) {
+            if (userRole === 'learner') {
+                showToast('Only teachers and admins can delete assignments', 'warning');
+                return;
+            }
+            
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast('Assignment not found', 'error');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete "${assignment.title}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('assessments')
+                    .delete()
+                    .eq('id', assignmentId);
+                
+                if (error) throw error;
+                
+                showToast('Assignment deleted successfully', 'success');
+                await loadData();
+                
+            } catch (error) {
+                console.error('Error deleting assignment:', error);
+                showToast('Error deleting assignment: ' + error.message, 'error');
+            }
+        }
+
+        // ============================================
+        // DARK MODE
+        // ============================================
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            updateDarkModeIcon(isDark);
+        }
+
+        function updateDarkModeIcon(isDark) {
+            const icon = document.getElementById('dark-mode-icon');
+            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function initDarkMode() {
+            const saved = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = saved ? saved === 'true' : prefersDark;
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                updateDarkModeIcon(true);
+            }
+        }
+
+        // ============================================
+        // CLOSE MODAL ON OVERLAY CLICK
+        // ============================================
+        document.getElementById('assignment-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        document.getElementById('view-assignment-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeViewModal();
+            }
+        });
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeViewModal();
+            }
+        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        (async function init() {
+            console.log('🚀 CastroEduConnect Assignments Page Loading...');
+            
+            // Init dark mode
+            initDarkMode();
+            
+            // Setup dark mode toggle
+            document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
+            
+            // Check authentication
+            const isAuth = await checkAuth();
+            
+            if (!isAuth) {
+                console.log('❌ Not authenticated, redirecting...');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            console.log('✅ Assignments page initialized successfully');
+        })();
     </script>
 </body>
 </html>
