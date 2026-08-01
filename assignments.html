@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
     
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
@@ -132,19 +131,22 @@
             border-radius: 1rem;
             padding: 1rem;
             margin-bottom: 1rem;
+            border: 1px solid #E5E7EB;
         }
         .dark .question-block {
             background: #1F2937;
+            border-color: #374151;
         }
         
         .choice-option {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1rem;
             border-radius: 0.75rem;
             transition: all 0.2s ease;
             cursor: pointer;
+            border: 2px solid transparent;
         }
         .choice-option:hover {
             background: rgba(37, 99, 235, 0.05);
@@ -154,32 +156,10 @@
         }
         .choice-option.selected {
             background: rgba(37, 99, 235, 0.1);
-            border: 2px solid #2563EB;
+            border-color: #2563EB;
         }
         .dark .choice-option.selected {
             background: rgba(37, 99, 235, 0.2);
-        }
-        
-        .correct-answer {
-            border-left: 4px solid #10B981;
-        }
-        .wrong-answer {
-            border-left: 4px solid #EF4444;
-        }
-        
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s ease-in-out infinite;
-            border-radius: 0.75rem;
-        }
-        @keyframes skeleton-loading {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .dark .skeleton {
-            background: linear-gradient(90deg, #1a1a2e 25%, #2a2a3e 50%, #1a1a2e 75%);
-            background-size: 200% 100%;
         }
         
         .status-badge {
@@ -197,6 +177,41 @@
         .dark .status-published { background: #1E3A5F; color: #60A5FA; }
         .dark .status-active { background: #065F46; color: #34D399; }
         .dark .status-closed { background: #7F1D1D; color: #F87171; }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 0.75rem;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1a1a2e 25%, #2a2a3e 50%, #1a1a2e 75%);
+            background-size: 200% 100%;
+        }
+        
+        .correct-answer {
+            border-left: 4px solid #10B981;
+        }
+        .wrong-answer {
+            border-left: 4px solid #EF4444;
+        }
+        
+        .form-input-error {
+            border-color: #EF4444 !important;
+        }
+        .form-error-message {
+            color: #EF4444;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .form-error-message.show {
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -247,7 +262,6 @@
 
     <!-- Main Content -->
     <main class="md:ml-64 min-h-screen">
-        <!-- Top Bar -->
         <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between px-6 py-4">
                 <div class="flex items-center space-x-4">
@@ -287,9 +301,7 @@
             </div>
         </header>
 
-        <!-- Content -->
         <div class="p-6">
-            <!-- Actions -->
             <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div class="flex flex-wrap items-center gap-3">
                     <select id="filter-subject" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
@@ -308,9 +320,7 @@
                 </button>
             </div>
 
-            <!-- Assignments Grid -->
             <div id="assignments-container" class="space-y-4">
-                <!-- Loading Skeletons -->
                 <div class="assignment-card">
                     <div class="skeleton h-6 w-3/4 mb-2"></div>
                     <div class="skeleton h-4 w-1/2 mb-4"></div>
@@ -351,11 +361,12 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
                         <input type="text" id="assignment-title" required 
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                        <div class="form-error-message" id="title-error">Please enter a title</div>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
-                        <textarea id="assignment-description" rows="3" 
+                        <textarea id="assignment-description" rows="2" 
                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
                     </div>
                     
@@ -366,6 +377,7 @@
                                     class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                                 <option value="">Select Subject</option>
                             </select>
+                            <div class="form-error-message" id="subject-error">Please select a subject</div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
@@ -379,30 +391,28 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Due Date</label>
                             <input type="datetime-local" id="assignment-due" 
                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Limit (minutes)</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time Limit (min)</label>
                             <input type="number" id="assignment-time-limit" value="60" 
                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                         </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Marks</label>
                             <input type="number" id="assignment-marks" value="100" 
                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Passing Mark</label>
-                            <input type="number" id="assignment-passing" value="50" 
-                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
-                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Passing Mark</label>
+                        <input type="number" id="assignment-passing" value="50" 
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
                     </div>
                     
                     <!-- Questions Section -->
@@ -640,7 +650,6 @@
             const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
             document.getElementById('user-avatar').innerHTML = initials || '<i class="fas fa-user"></i>';
             
-            // Show/hide create button based on role
             if (userRole === 'teacher' || userRole === 'admin') {
                 document.getElementById('create-assignment-btn').classList.remove('hidden');
             }
@@ -697,10 +706,10 @@
                 subjects = data || [];
                 console.log('📚 Subjects loaded:', subjects.length);
                 
-                // Populate subject dropdowns
                 const selects = ['filter-subject', 'assignment-subject'];
                 selects.forEach(id => {
                     const select = document.getElementById(id);
+                    if (!select) return;
                     const options = select.querySelectorAll('option:not([value=""])');
                     options.forEach(opt => opt.remove());
                     
@@ -787,9 +796,7 @@
         // ============================================
         // POPULATE FILTERS
         // ============================================
-        function populateFilters() {
-            // Subjects already populated in loadSubjects
-        }
+        function populateFilters() {}
 
         // ============================================
         // APPLY FILTERS
@@ -807,13 +814,6 @@
             
             if (subjectFilter) {
                 filteredAssignments = filteredAssignments.filter(a => a.subject_id === subjectFilter);
-            }
-            
-            if (statusFilter) {
-                // For learners, filter by completion status
-                if (userRole === 'learner') {
-                    // We'll check if assignment has been attempted                    // This is simplified - in production, you'd check submissions
-                }
             }
             
             if (searchTerm) {
@@ -939,8 +939,11 @@
             questionCount = 0;
             document.getElementById('save-assignment-btn').innerHTML = '<i class="fas fa-save mr-2"></i> Save Assignment';
             
+            // Clear errors
+            document.querySelectorAll('.form-error-message').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.form-input-error').forEach(el => el.classList.remove('form-input-error'));
+            
             document.getElementById('assignment-modal').classList.add('active');
-            // Add a default question
             addQuestion();
         }
 
@@ -989,7 +992,6 @@
                     </div>
                     
                     <div id="choices-container-${questionCount}">
-                        <!-- Choices will be added here for multiple choice -->
                         <div class="mt-2">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Choices</label>
                             <div class="space-y-2" id="choices-list-${questionCount}">
@@ -1073,7 +1075,6 @@
             const element = document.getElementById(questionId);
             if (element) {
                 element.remove();
-                // Re-number questions
                 const questions = document.querySelectorAll('.question-block');
                 questions.forEach((q, index) => {
                     const header = q.querySelector('h4');
@@ -1085,10 +1086,14 @@
         }
 
         // ============================================
-        // SAVE ASSIGNMENT
+        // SAVE ASSIGNMENT - FIXED
         // ============================================
         document.getElementById('assignment-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Clear errors
+            document.querySelectorAll('.form-error-message').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.form-input-error').forEach(el => el.classList.remove('form-input-error'));
             
             const editId = document.getElementById('edit-assignment-id').value;
             const title = document.getElementById('assignment-title').value.trim();
@@ -1100,7 +1105,21 @@
             const totalMarks = parseInt(document.getElementById('assignment-marks').value) || 100;
             const passingMark = parseInt(document.getElementById('assignment-passing').value) || 50;
             
-            if (!title || !subjectId) {
+            let isValid = true;
+            
+            if (!title) {
+                document.getElementById('assignment-title').classList.add('form-input-error');
+                document.getElementById('title-error').classList.add('show');
+                isValid = false;
+            }
+            
+            if (!subjectId) {
+                document.getElementById('assignment-subject').classList.add('form-input-error');
+                document.getElementById('subject-error').classList.add('show');
+                isValid = false;
+            }
+            
+            if (!isValid) {
                 showToast('Please fill in all required fields', 'warning');
                 return;
             }
@@ -1115,8 +1134,8 @@
             const questions = [];
             let totalQuestionMarks = 0;
             
-            questionBlocks.forEach((block, index) => {
-                const qNum = index + 1;
+            for (const block of questionBlocks) {
+                const qNum = block.id.split('-')[1];
                 const questionText = block.querySelector(`input[name="question_text_${qNum}"]`)?.value.trim();
                 const questionType = block.querySelector(`select[name="question_type_${qNum}"]`)?.value || 'multiple_choice';
                 const marks = parseInt(block.querySelector(`input[name="question_marks_${qNum}"]`)?.value) || 1;
@@ -1134,30 +1153,30 @@
                     correctAnswer: null
                 };
                 
-                // Get correct answer
-                const correctRadio = block.querySelector(`input[name="correct_${qNum}"]:checked`);
-                if (correctRadio) {
-                    questionData.correctAnswer = parseInt(correctRadio.value);
-                }
-                
-                // Get choices for multiple choice
+                // Get correct answer for multiple choice/true false
                 if (questionType === 'multiple_choice' || questionType === 'true_false') {
+                    const correctRadio = block.querySelector(`input[name="correct_${qNum}"]:checked`);
+                    if (correctRadio) {
+                        questionData.correctAnswer = parseInt(correctRadio.value);
+                    }
+                    
+                    // Get choices
                     const choiceInputs = block.querySelectorAll(`input[name^="choice_${qNum}_"]`);
-                    choiceInputs.forEach((input, idx) => {
+                    choiceInputs.forEach((input) => {
                         const choiceText = input.value.trim();
                         if (choiceText) {
                             questionData.choices.push(choiceText);
                         }
                     });
+                    
+                    if (questionData.choices.length < 2) {
+                        showToast(`Question ${qNum} needs at least 2 choices`, 'warning');
+                        return;
+                    }
                 }
                 
                 totalQuestionMarks += marks;
                 questions.push(questionData);
-            });
-            
-            if (questions.length === 0) {
-                showToast('Please add valid questions', 'warning');
-                return;
             }
             
             const btn = document.getElementById('save-assignment-btn');
@@ -1201,6 +1220,10 @@
                     assignmentResult = data;
                 }
                 
+                if (!assignmentResult || assignmentResult.length === 0) {
+                    throw new Error('Failed to create assignment');
+                }
+                
                 const assignmentId = assignmentResult[0].id;
                 
                 // Save questions
@@ -1221,10 +1244,14 @@
                     
                     if (qError) throw qError;
                     
+                    if (!questionResult || questionResult.length === 0) {
+                        throw new Error('Failed to create question');
+                    }
+                    
                     const questionId = questionResult[0].id;
                     
-                    // Save choices
-                    if (q.choices && q.choices.length > 0) {
+                    // Save choices for multiple choice/true false
+                    if ((q.type === 'multiple_choice' || q.type === 'true_false') && q.choices.length > 0) {
                         for (let j = 0; j < q.choices.length; j++) {
                             const choiceData = {
                                 question_id: questionId,
@@ -1256,18 +1283,23 @@
         });
 
         // ============================================
-        // EDIT ASSIGNMENT
-        // ============================================
-        function editAssignment(assignmentId) {
-            // For now, just show a message since full edit would require loading existing questions
-            showToast('Edit functionality - Please create a new assignment for now', 'info');
-        }
-
-        // ============================================
         // VIEW ASSIGNMENT
         // ============================================
         function viewAssignment(assignmentId) {
-            showToast('View assignment details coming soon', 'info');
+            const assignment = assignments.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast('Assignment not found', 'error');
+                return;
+            }
+            
+            showToast(`Assignment: ${assignment.title}`, 'info');
+        }
+
+        // ============================================
+        // EDIT ASSIGNMENT
+        // ============================================
+        function editAssignment(assignmentId) {
+            showToast('Edit functionality - Please create a new assignment for now', 'info');
         }
 
         // ============================================
@@ -1302,7 +1334,6 @@
                 return;
             }
             
-            // Load questions
             try {
                 const { data: questions, error } = await supabaseClient
                     .from('questions')
@@ -1352,7 +1383,6 @@
             
             document.getElementById('question-progress').textContent = `Question ${currentQuestionIndex + 1} of ${total}`;
             
-            // Show/hide navigation buttons
             document.getElementById('prev-question').classList.toggle('hidden', currentQuestionIndex === 0);
             document.getElementById('next-question').classList.toggle('hidden', currentQuestionIndex === total - 1);
             
@@ -1477,8 +1507,6 @@
                     correctAnswer = correctChoice >= 0 ? correctChoice : null;
                     isCorrect = userAnswer === correctAnswer;
                 } else {
-                    // For short answer and essay, we need manual grading
-                    // For now, mark as pending
                     isCorrect = false;
                 }
                 
@@ -1502,7 +1530,6 @@
             const grade = percentage >= 80 ? 'A' : percentage >= 70 ? 'B' : percentage >= 60 ? 'C' : percentage >= 50 ? 'D' : 'F';
             
             try {
-                // Save submission
                 const { data: submission, error } = await supabaseClient
                     .from('submissions')
                     .insert([{
@@ -1521,7 +1548,6 @@
                 
                 if (error) throw error;
                 
-                // Save answers
                 for (const result of results) {
                     await supabaseClient
                         .from('answers')
