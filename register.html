@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
+    
+    <!-- ✅ ADD THIS: Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         .password-strength {
             height: 4px;
@@ -40,6 +44,15 @@
         
         .success-check {
             color: #10B981;
+        }
+
+        /* Loading spinner animation */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -208,8 +221,17 @@
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
     
-    <script src="script.js"></script>
     <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
+        
+        // Initialize Supabase client
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client initialized');
+        
         // ============================================
         // PASSWORD STRENGTH CHECKER
         // ============================================
@@ -327,7 +349,7 @@
         }
         
         // ============================================
-        // FORM SUBMISSION - WITH SUPABASE INTEGRATION
+        // FORM SUBMISSION - WITH SUPABASE
         // ============================================
         document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -348,18 +370,21 @@
             // Validate First Name
             if (!firstName) {
                 showError('first-name', 'first-name-error');
+                showToast('Please enter your first name', 'error');
                 return;
             }
             
             // Validate Last Name
             if (!lastName) {
                 showError('last-name', 'last-name-error');
+                showToast('Please enter your last name', 'error');
                 return;
             }
             
             // Validate Email
             if (!validateEmail(email)) {
                 showError('email', 'email-error');
+                showToast('Please enter a valid email address', 'error');
                 return;
             }
             
@@ -386,24 +411,12 @@
             // Show loading state
             const btn = document.getElementById('register-btn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+            btn.innerHTML = '<i class="fas fa-spinner spinner"></i> Creating account...';
             
             try {
                 // ============================================
-                // SUPABASE REGISTRATION
+                // SUPABASE SIGN UP
                 // ============================================
-                // Note: This uses the Supabase JS library
-                // Add the SDK in your HTML: 
-                // <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-                
-                // Uncomment this code when Supabase is set up:
-                /*
-                const { createClient } = supabase;
-                const supabaseUrl = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
-                const supabaseKey = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
-                const supabaseClient = createClient(supabaseUrl, supabaseKey);
-                
-                // Sign up user
                 const { data, error } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
@@ -413,36 +426,44 @@
                             last_name: lastName,
                             role: role,
                             full_name: `${firstName} ${lastName}`
-                        }
+                        },
+                        emailRedirectTo: `${window.location.origin}/login.html`
                     }
                 });
                 
                 if (error) {
                     throw new Error(error.message);
                 }
-                */
                 
-                // For demo purposes - simulate success
-                console.log('Registration Data:', { firstName, lastName, email, role });
+                console.log('✅ Registration successful:', data);
                 
                 // Show success message
-                showToast('Account created successfully! 🎉', 'success');
+                showToast('Account created successfully! 🎉 Please check your email to verify your account.', 'success');
                 
-                // Disable button
-                btn.disabled = true;
+                // Update button
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Account Created!';
                 btn.className = 'w-full bg-green-500 py-3 rounded-xl text-white font-semibold text-lg';
                 
-                // Redirect after 2 seconds
+                // Redirect after 3 seconds
                 setTimeout(() => {
                     window.location.href = 'login.html';
-                }, 2000);
+                }, 3000);
                 
             } catch (error) {
-                console.error('Registration error:', error);
-                showToast(error.message || 'Registration failed. Please try again.', 'error');
+                console.error('❌ Registration error:', error);
+                
+                // Handle specific error cases
+                let errorMessage = error.message;
+                if (error.message.includes('User already registered')) {
+                    errorMessage = 'This email is already registered. Please login instead.';
+                } else if (error.message.includes('Password should be at least 6 characters')) {
+                    errorMessage = 'Password must be at least 6 characters.';
+                }
+                
+                showToast(errorMessage, 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+                btn.className = 'w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg flex items-center justify-center space-x-2';
             }
         });
         
@@ -454,14 +475,12 @@
         document.getElementById('password').addEventListener('input', function() {
             updatePasswordStrength(this.value);
             
-            // Validate password length
             if (this.value.length >= 8) {
                 hideError('password', 'password-error');
-            } else {
+            } else if (this.value.length > 0) {
                 showError('password', 'password-error');
             }
             
-            // Check confirm password match
             const confirm = document.getElementById('confirm-password');
             if (confirm.value && this.value !== confirm.value) {
                 showError('confirm-password', 'confirm-password-error');
@@ -511,7 +530,6 @@
         // KEYBOARD SHORTCUTS
         // ============================================
         document.addEventListener('keydown', function(e) {
-            // Ctrl+Enter to submit form
             if (e.ctrlKey && e.key === 'Enter') {
                 document.getElementById('register-form').dispatchEvent(new Event('submit'));
             }
@@ -521,6 +539,8 @@
         // INITIALIZATION
         // ============================================
         console.log('🚀 CastroEduConnect Registration Page Loaded');
+        console.log('📧 Supabase URL:', SUPABASE_URL);
+        console.log('🔑 Supabase Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
     </script>
 </body>
 </html>
