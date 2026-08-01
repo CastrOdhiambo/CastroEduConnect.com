@@ -395,22 +395,22 @@
         console.log('✅ Supabase client initialized');
 
         // ============================================
-        // GRADES DATA - Predefined
+        // GRADES DATA - With UUIDs
         // ============================================
         const GRADES_DATA = [
-            { id: 'grade-1', name: 'Grade 1', code: 'G1', sort_order: 1 },
-            { id: 'grade-2', name: 'Grade 2', code: 'G2', sort_order: 2 },
-            { id: 'grade-3', name: 'Grade 3', code: 'G3', sort_order: 3 },
-            { id: 'grade-4', name: 'Grade 4', code: 'G4', sort_order: 4 },
-            { id: 'grade-5', name: 'Grade 5', code: 'G5', sort_order: 5 },
-            { id: 'grade-6', name: 'Grade 6', code: 'G6', sort_order: 6 },
-            { id: 'grade-7', name: 'Grade 7', code: 'G7', sort_order: 7 },
-            { id: 'grade-8', name: 'Grade 8', code: 'G8', sort_order: 8 },
-            { id: 'grade-9', name: 'Grade 9', code: 'G9', sort_order: 9 },
-            { id: 'form-1', name: 'Form 1', code: 'F1', sort_order: 10 },
-            { id: 'form-2', name: 'Form 2', code: 'F2', sort_order: 11 },
-            { id: 'form-3', name: 'Form 3', code: 'F3', sort_order: 12 },
-            { id: 'form-4', name: 'Form 4', code: 'F4', sort_order: 13 }
+            { id: '11111111-1111-1111-1111-111111111111', name: 'Grade 1', code: 'G1', sort_order: 1 },
+            { id: '22222222-2222-2222-2222-222222222222', name: 'Grade 2', code: 'G2', sort_order: 2 },
+            { id: '33333333-3333-3333-3333-333333333333', name: 'Grade 3', code: 'G3', sort_order: 3 },
+            { id: '44444444-4444-4444-4444-444444444444', name: 'Grade 4', code: 'G4', sort_order: 4 },
+            { id: '55555555-5555-5555-5555-555555555555', name: 'Grade 5', code: 'G5', sort_order: 5 },
+            { id: '66666666-6666-6666-6666-666666666666', name: 'Grade 6', code: 'G6', sort_order: 6 },
+            { id: '77777777-7777-7777-7777-777777777777', name: 'Grade 7', code: 'G7', sort_order: 7 },
+            { id: '88888888-8888-8888-8888-888888888888', name: 'Grade 8', code: 'G8', sort_order: 8 },
+            { id: '99999999-9999-9999-9999-999999999999', name: 'Grade 9', code: 'G9', sort_order: 9 },
+            { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', name: 'Form 1', code: 'F1', sort_order: 10 },
+            { id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', name: 'Form 2', code: 'F2', sort_order: 11 },
+            { id: 'cccccccc-cccc-cccc-cccc-cccccccccccc', name: 'Form 3', code: 'F3', sort_order: 12 },
+            { id: 'dddddddd-dddd-dddd-dddd-dddddddddddd', name: 'Form 4', code: 'F4', sort_order: 13 }
         ];
 
         // ============================================
@@ -562,6 +562,17 @@
         }
 
         // ============================================
+        // GENERATE UUID
+        // ============================================
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // ============================================
         // LOAD DATA
         // ============================================
         async function loadData() {
@@ -578,7 +589,7 @@
         }
 
         // ============================================
-        // LOAD GRADES - Use predefined or fetch from DB
+        // LOAD GRADES - Use predefined with UUIDs
         // ============================================
         async function loadGrades() {
             try {
@@ -589,12 +600,10 @@
                     .order('sort_order', { ascending: true });
                 
                 if (error || !data || data.length === 0) {
-                    // If no grades in DB, use predefined and seed
-                    console.log('No grades in DB, using predefined grades');
-                    grades = GRADES_DATA;
+                    console.log('No grades in DB, seeding predefined grades');
                     
-                    // Seed grades into database if they don't exist
-                    for (const grade of grades) {
+                    // Seed grades with UUIDs
+                    for (const grade of GRADES_DATA) {
                         const { error: insertError } = await supabaseClient
                             .from('grades')
                             .upsert({
@@ -609,6 +618,15 @@
                             console.error('Error seeding grade:', insertError);
                         }
                     }
+                    
+                    // Fetch the seeded grades
+                    const { data: seededData, error: fetchError } = await supabaseClient
+                        .from('grades')
+                        .select('*')
+                        .order('sort_order', { ascending: true });
+                    
+                    if (fetchError) throw fetchError;
+                    grades = seededData || GRADES_DATA;
                 } else {
                     grades = data;
                 }
