@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings - CastroEduConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
+            </div>
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
+                <a href="subjects.html" class="sidebar-link"><i class="fas fa-book w-5"></i> Subjects</a>
+                <a href="assignments.html" class="sidebar-link"><i class="fas fa-tasks w-5"></i> Assignments</a>
+                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
+                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
+                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
+                <a href="announcements.html" class="sidebar-link"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+                <a href="discussions.html" class="sidebar-link"><i class="fas fa-comments w-5"></i> Discussions</a>
+                <a href="admin.html" class="sidebar-link"><i class="fas fa-user-shield w-5"></i> Admin Console</a>
+                <a href="profile.html" class="sidebar-link"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="settings.html" class="sidebar-link active"><i class="fas fa-cog w-5"></i> Settings</a>
+                <a href="#" onclick="logoutUser(); return false;" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 min-h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
+                <div class="flex-1 max-w-xl mx-4"></div>
+                <div class="flex items-center space-x-4">
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="flex items-center space-x-3">
+                        <div id="header-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">--</div>
+                        <div class="hidden sm:block">
+                            <div id="header-name" class="text-sm font-semibold text-gray-900 dark:text-white">Loading...</div>
+                            <div id="header-role" class="text-xs text-gray-500 dark:text-gray-400 capitalize">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-6">
+            <div class="max-w-3xl mx-auto">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
+
+                <div class="space-y-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appearance</h3>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-900 dark:text-white font-medium">Dark Mode</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark theme</p>
+                            </div>
+                            <button id="dark-mode-switch" onclick="toggleDarkModeSwitch()" class="relative w-12 h-6 bg-gray-300 dark:bg-blue-600 rounded-full transition duration-300">
+                                <div id="dark-mode-knob" class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition duration-300"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Notifications</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-gray-900 dark:text-white font-medium">Email Notifications</p><p class="text-sm text-gray-500 dark:text-gray-400">Receive email updates about assignments and grades</p></div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input id="pref-email" type="checkbox" checked class="sr-only peer" onchange="savePrefs()">
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-gray-900 dark:text-white font-medium">Push Notifications</p><p class="text-sm text-gray-500 dark:text-gray-400">Get real-time notifications in your browser</p></div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input id="pref-push" type="checkbox" class="sr-only peer" onchange="savePrefs()">
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Account</h3>
+                        <div class="space-y-3">
+                            <button onclick="window.location.href='profile.html'" class="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition">
+                                <span class="text-gray-700 dark:text-gray-300">Change Password</span>
+                                <i class="fas fa-chevron-right float-right text-gray-400 mt-1"></i>
+                            </button>
+                            <button onclick="window.location.href='profile.html'" class="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition">
+                                <span class="text-gray-700 dark:text-gray-300">Edit Profile Info</span>
+                                <i class="fas fa-chevron-right float-right text-gray-400 mt-1"></i>
+                            </button>
+                            <button onclick="openDeleteConfirm()" class="w-full text-left px-4 py-3 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition">
+                                <span class="text-red-600 dark:text-red-400">Delete Account</span>
+                                <i class="fas fa-chevron-right float-right text-red-400 mt-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="delete-modal" class="modal-overlay">
+        <div class="modal-content max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete account?</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">Deleting your account requires an administrator to remove your login credentials for security reasons. We've logged your request — an admin will process it shortly. In the meantime you can keep using CastroEduConnect normally.</p>
+            <div class="flex space-x-3">
+                <button onclick="closeDeleteConfirm()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="requestDeletion()" class="flex-1 bg-red-600 py-3 rounded-xl text-white font-semibold">Request Deletion</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userProfile = null;
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<div class="flex items-center justify-between"><span>${message}</span><button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white"><i class="fas fa-times"></i></button></div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = 'all 0.3s ease'; setTimeout(() => toast.remove(), 300); }, duration);
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        async function logoutUser() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+        function initials(first, last) { return `${(first || '?')[0] || ''}${(last || '')[0] || ''}`.toUpperCase() || '?'; }
+
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return null; }
+            currentUser = session.user;
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (error) { showToast('Could not load your profile', 'error'); return null; }
+            userProfile = data;
+            document.getElementById('header-name').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email;
+            document.getElementById('header-role').textContent = data.role;
+            document.getElementById('header-avatar').textContent = initials(data.first_name, data.last_name);
+            return data;
+        }
+
+        // Dark mode
+        function syncDarkSwitch() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('dark-mode-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            document.getElementById('dark-mode-knob').style.transform = isDark ? 'translateX(24px)' : 'translateX(0)';
+        }
+        function toggleDarkModeSwitch() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            syncDarkSwitch();
+        }
+        document.getElementById('dark-mode-toggle')?.addEventListener('click', toggleDarkModeSwitch);
+        function initDarkMode() {
+            const saved = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = saved ? saved === 'true' : prefersDark;
+            if (isDark) document.documentElement.classList.add('dark');
+            syncDarkSwitch();
+        }
+
+        // Notification prefs stored locally per-user (no schema column needed for this demo)
+        function loadPrefs() {
+            if (!currentUser) return;
+            const raw = localStorage.getItem('notifPrefs:' + currentUser.id);
+            const prefs = raw ? JSON.parse(raw) : { email: true, push: false };
+            document.getElementById('pref-email').checked = prefs.email;
+            document.getElementById('pref-push').checked = prefs.push;
+        }
+        function savePrefs() {
+            const prefs = {
+                email: document.getElementById('pref-email').checked,
+                push: document.getElementById('pref-push').checked,
+            };
+            localStorage.setItem('notifPrefs:' + currentUser.id, JSON.stringify(prefs));
+            showToast('Notification preferences saved', 'success');
+        }
+
+        function openDeleteConfirm() { document.getElementById('delete-modal').classList.add('active'); }
+        function closeDeleteConfirm() { document.getElementById('delete-modal').classList.remove('active'); }
+        async function requestDeletion() {
+            try {
+                await supabaseClient.from('activity_logs').insert([{
+                    user_id: currentUser.id,
+                    action: 'account_deletion_requested',
+                    entity_type: 'profiles',
+                    entity_id: currentUser.id
+                }]);
+                showToast('Deletion request submitted', 'success');
+            } catch (e) {
+                console.error(e);
+                showToast('Request logged locally — please also contact an admin', 'info');
+            } finally {
+                closeDeleteConfirm();
+            }
+        }
+
+        (async function init() {
+            initDarkMode();
+            const p = await checkAuth();
+            if (!p) return;
+            loadPrefs();
+        })();
+    </script>
+</body>
+</html>

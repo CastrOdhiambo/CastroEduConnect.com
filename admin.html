@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Console - CastroEduConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        .tab-btn { padding: 0.6rem 1.1rem; border-radius: 0.75rem; font-weight: 600; color: #6b7280; cursor: pointer; transition: all .2s; white-space: nowrap; }
+        .tab-btn.active { background: linear-gradient(135deg, #2563EB, #4F46E5); color: white; }
+        .dark .tab-btn { color: #9ca3af; }
+        table.admin-table { width: 100%; border-collapse: collapse; }
+        table.admin-table th { text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #9ca3af; padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; }
+        .dark table.admin-table th { border-color: #374151; }
+        table.admin-table td { padding: 0.85rem 1rem; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem; }
+        .dark table.admin-table td { border-color: #1f2937; color: #e5e7eb; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
+            </div>
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
+                <a href="subjects.html" class="sidebar-link"><i class="fas fa-book w-5"></i> Subjects</a>
+                <a href="assignments.html" class="sidebar-link"><i class="fas fa-tasks w-5"></i> Assignments</a>
+                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
+                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
+                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
+                <a href="announcements.html" class="sidebar-link"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+                <a href="discussions.html" class="sidebar-link"><i class="fas fa-comments w-5"></i> Discussions</a>
+                <a href="admin.html" class="sidebar-link active"><i class="fas fa-user-shield w-5"></i> Admin Console</a>
+                <a href="profile.html" class="sidebar-link"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="settings.html" class="sidebar-link"><i class="fas fa-cog w-5"></i> Settings</a>
+                <a href="#" onclick="logoutUser(); return false;" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 min-h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
+                <div class="flex-1 max-w-xl mx-4"></div>
+                <div class="flex items-center space-x-4">
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="flex items-center space-x-3">
+                        <div id="header-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">--</div>
+                        <div class="hidden sm:block">
+                            <div id="header-name" class="text-sm font-semibold text-gray-900 dark:text-white">Loading...</div>
+                            <div id="header-role" class="text-xs text-gray-500 dark:text-gray-400 capitalize">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="admin-content" class="p-6 hidden">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Admin Console</h1>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">System-wide management for CastroEduConnect</p>
+
+            <div class="flex gap-2 mb-6 overflow-x-auto pb-1">
+                <div class="tab-btn active" data-tab="overview" onclick="switchTab('overview')"><i class="fas fa-chart-pie mr-2"></i>Overview</div>
+                <div class="tab-btn" data-tab="users" onclick="switchTab('users')"><i class="fas fa-users mr-2"></i>Users</div>
+                <div class="tab-btn" data-tab="grades" onclick="switchTab('grades')"><i class="fas fa-layer-group mr-2"></i>Grades</div>
+                <div class="tab-btn" data-tab="classes" onclick="switchTab('classes')"><i class="fas fa-chalkboard mr-2"></i>Classes</div>
+                <div class="tab-btn" data-tab="subjects" onclick="switchTab('subjects')"><i class="fas fa-book mr-2"></i>Subjects</div>
+            </div>
+
+            <!-- OVERVIEW -->
+            <div id="tab-overview" class="tab-panel">
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-users">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total Users</div></div>
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-teachers">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Teachers</div></div>
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-learners">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Learners</div></div>
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-subjects">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Subjects</div></div>
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-assessments">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Assessments Created</div></div>
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-submissions">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Submissions</div></div>
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-resources">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Resources</div></div>
+                    <div class="dashboard-card"><div class="text-3xl font-bold text-gray-900 dark:text-white" id="ov-announcements">--</div><div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Announcements</div></div>
+                </div>
+                <div class="dashboard-card">
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
+                    <div id="ov-activity" class="space-y-2 text-sm text-gray-600 dark:text-gray-400">Loading...</div>
+                </div>
+            </div>
+
+            <!-- USERS -->
+            <div id="tab-users" class="tab-panel hidden">
+                <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                    <div class="relative flex-1 max-w-sm">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input id="user-search" type="text" placeholder="Search users..." class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                    </div>
+                    <select id="user-role-filter" class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                        <option value="">All roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="learner">Learner</option>
+                    </select>
+                </div>
+                <div class="dashboard-card overflow-x-auto">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+                        <tbody id="users-tbody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- GRADES -->
+            <div id="tab-grades" class="tab-panel hidden">
+                <div class="flex justify-end mb-4"><button onclick="openGradeModal()" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold"><i class="fas fa-plus mr-2"></i>New Grade</button></div>
+                <div class="dashboard-card overflow-x-auto">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Code</th><th>Order</th><th>Status</th><th></th></tr></thead>
+                        <tbody id="grades-tbody"><tr><td colspan="5" class="text-center py-8 text-gray-400">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CLASSES -->
+            <div id="tab-classes" class="tab-panel hidden">
+                <div class="flex justify-end mb-4"><button onclick="openClassModal()" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold"><i class="fas fa-plus mr-2"></i>New Class</button></div>
+                <div class="dashboard-card overflow-x-auto">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Grade</th><th>Teacher</th><th>Room</th><th>Capacity</th><th></th></tr></thead>
+                        <tbody id="classes-tbody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SUBJECTS -->
+            <div id="tab-subjects" class="tab-panel hidden">
+                <div class="flex justify-end mb-4"><button onclick="openSubjectModal()" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold"><i class="fas fa-plus mr-2"></i>New Subject</button></div>
+                <div class="dashboard-card overflow-x-auto">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Code</th><th>Grade</th><th>Teacher</th><th>Status</th><th></th></tr></thead>
+                        <tbody id="subjects-tbody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="access-denied" class="p-6 hidden text-center py-24">
+            <i class="fas fa-lock text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <p class="text-gray-500 dark:text-gray-400">The Admin Console is only available to administrator accounts.</p>
+            <button onclick="window.location.href='dashboard.html'" class="mt-4 btn-primary px-6 py-2 rounded-xl text-white font-semibold">Back to Dashboard</button>
+        </div>
+    </main>
+
+    <!-- User role/status modal -->
+    <div id="user-modal" class="modal-overlay">
+        <div class="modal-content max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Manage User</h3>
+            <p id="user-modal-name" class="font-medium text-gray-900 dark:text-white mb-4"></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
+                    <select id="user-modal-role" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="learner">Learner</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-900 dark:text-white font-medium">Active</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="user-modal-active" type="checkbox" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeUserModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="saveUser()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade modal -->
+    <div id="grade-modal" class="modal-overlay">
+        <div class="modal-content max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Grade / Level</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="grade-id" />
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label><input id="grade-name" type="text" placeholder="e.g. Grade 4" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Code</label><input id="grade-code" type="text" placeholder="e.g. G4" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort Order</label><input id="grade-order" type="number" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeGradeModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="saveGrade()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class modal -->
+    <div id="class-modal" class="modal-overlay">
+        <div class="modal-content max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Class</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="class-id" />
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label><input id="class-name" type="text" placeholder="e.g. Grade 4 Blue" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Code</label><input id="class-code" type="text" placeholder="e.g. G4-BLUE" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grade</label><select id="class-grade" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></select></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Class Teacher</label><select id="class-teacher" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="">Unassigned</option></select></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Room</label><input id="class-room" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Capacity</label><input id="class-capacity" type="number" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeClassModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="saveClass()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject modal -->
+    <div id="subject-modal" class="modal-overlay">
+        <div class="modal-content max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Subject</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="subject-id" />
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label><input id="subject-name" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Code</label><input id="subject-code" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grade</label><select id="subject-grade" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></select></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Teacher</label><select id="subject-teacher" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="">Unassigned</option></select></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label><input id="subject-color" type="color" value="#2563EB" class="w-full h-12 px-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700" /></div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeSubjectModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="saveSubject()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userProfile = null;
+        let allUsers = [];
+        let allGrades = [];
+        let allClasses = [];
+        let allSubjects = [];
+        let allTeachers = [];
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<div class="flex items-center justify-between"><span>${message}</span><button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white"><i class="fas fa-times"></i></button></div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = 'all 0.3s ease'; setTimeout(() => toast.remove(), 300); }, duration);
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        async function logoutUser() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+        function initials(first, last) { return `${(first || '?')[0] || ''}${(last || '')[0] || ''}`.toUpperCase() || '?'; }
+        function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return null; }
+            currentUser = session.user;
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (error) { showToast('Could not load your profile', 'error'); return null; }
+            userProfile = data;
+            document.getElementById('header-name').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email;
+            document.getElementById('header-role').textContent = data.role;
+            document.getElementById('header-avatar').textContent = initials(data.first_name, data.last_name);
+            return data;
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + tab));
+        }
+
+        // ---------------- OVERVIEW ----------------
+        async function loadOverview() {
+            try {
+                const counts = await Promise.all([
+                    supabaseClient.from('profiles').select('*', { count: 'exact', head: true }),
+                    supabaseClient.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
+                    supabaseClient.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'learner'),
+                    supabaseClient.from('subjects').select('*', { count: 'exact', head: true }),
+                    supabaseClient.from('assessments').select('*', { count: 'exact', head: true }),
+                    supabaseClient.from('submissions').select('*', { count: 'exact', head: true }),
+                    supabaseClient.from('resources').select('*', { count: 'exact', head: true }),
+                    supabaseClient.from('announcements').select('*', { count: 'exact', head: true }),
+                ]);
+                document.getElementById('ov-users').textContent = counts[0].count ?? 0;
+                document.getElementById('ov-teachers').textContent = counts[1].count ?? 0;
+                document.getElementById('ov-learners').textContent = counts[2].count ?? 0;
+                document.getElementById('ov-subjects').textContent = counts[3].count ?? 0;
+                document.getElementById('ov-assessments').textContent = counts[4].count ?? 0;
+                document.getElementById('ov-submissions').textContent = counts[5].count ?? 0;
+                document.getElementById('ov-resources').textContent = counts[6].count ?? 0;
+                document.getElementById('ov-announcements').textContent = counts[7].count ?? 0;
+
+                const { data: recentUsers } = await supabaseClient.from('profiles').select('first_name, last_name, role, created_at').order('created_at', { ascending: false }).limit(5);
+                document.getElementById('ov-activity').innerHTML = (recentUsers || []).map(u =>
+                    `<div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                        <span><i class="fas fa-user-plus text-blue-600 mr-2"></i>${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)} joined as <span class="capitalize font-medium">${u.role}</span></span>
+                        <span class="text-xs text-gray-400">${new Date(u.created_at).toLocaleDateString()}</span>
+                    </div>`
+                ).join('') || '<p>No recent activity.</p>';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // ---------------- USERS ----------------
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                allUsers = data || [];
+                allTeachers = allUsers.filter(u => u.role === 'teacher');
+                renderUsers();
+                populateTeacherSelects();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('users-tbody').innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-500">Could not load users</td></tr>`;
+            }
+        }
+        function renderUsers() {
+            const q = document.getElementById('user-search').value.toLowerCase();
+            const roleFilter = document.getElementById('user-role-filter').value;
+            const filtered = allUsers.filter(u => {
+                const name = `${u.first_name} ${u.last_name} ${u.email}`.toLowerCase();
+                return name.includes(q) && (!roleFilter || u.role === roleFilter);
+            });
+            const tbody = document.getElementById('users-tbody');
+            if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">No users found</td></tr>`; return; }
+            tbody.innerHTML = filtered.map(u => `
+                <tr>
+                    <td class="font-medium text-gray-900 dark:text-white">${escapeHtml(u.first_name)} ${escapeHtml(u.last_name)}</td>
+                    <td>${escapeHtml(u.email)}</td>
+                    <td><span class="capitalize px-2 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-purple-100 text-purple-600' : u.role === 'teacher' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}">${u.role}</span></td>
+                    <td>${u.is_active !== false ? '<span class="text-green-600 text-xs font-semibold"><i class="fas fa-circle mr-1" style="font-size:6px"></i>Active</span>' : '<span class="text-red-500 text-xs font-semibold"><i class="fas fa-circle mr-1" style="font-size:6px"></i>Suspended</span>'}</td>
+                    <td class="text-xs text-gray-400">${new Date(u.created_at).toLocaleDateString()}</td>
+                    <td><button onclick='openUserModal(${JSON.stringify(u.id)})' class="text-blue-600 hover:underline text-xs font-medium">Manage</button></td>
+                </tr>`).join('');
+        }
+        document.getElementById('user-search').addEventListener('input', renderUsers);
+        document.getElementById('user-role-filter').addEventListener('change', renderUsers);
+
+        let editingUserId = null;
+        function openUserModal(id) {
+            const u = allUsers.find(x => x.id === id);
+            if (!u) return;
+            editingUserId = id;
+            document.getElementById('user-modal-name').textContent = `${u.first_name} ${u.last_name} (${u.email})`;
+            document.getElementById('user-modal-role').value = u.role;
+            document.getElementById('user-modal-active').checked = u.is_active !== false;
+            document.getElementById('user-modal').classList.add('active');
+        }
+        function closeUserModal() { document.getElementById('user-modal').classList.remove('active'); editingUserId = null; }
+        async function saveUser() {
+            if (!editingUserId) return;
+            if (editingUserId === currentUser.id) {
+                const newRole = document.getElementById('user-modal-role').value;
+                if (newRole !== 'admin') { showToast("You can't demote your own account from here", 'warning'); return; }
+            }
+            try {
+                const { error } = await supabaseClient.from('profiles').update({
+                    role: document.getElementById('user-modal-role').value,
+                    is_active: document.getElementById('user-modal-active').checked
+                }).eq('id', editingUserId);
+                if (error) throw error;
+                showToast('User updated', 'success');
+                closeUserModal();
+                await loadUsers();
+            } catch (e) {
+                showToast('Could not update: ' + e.message, 'error');
+            }
+        }
+
+        // ---------------- GRADES ----------------
+        async function loadGrades() {
+            try {
+                const { data, error } = await supabaseClient.from('grades').select('*').order('sort_order');
+                if (error) throw error;
+                allGrades = data || [];
+                document.getElementById('grades-tbody').innerHTML = allGrades.map(g => `
+                    <tr>
+                        <td class="font-medium text-gray-900 dark:text-white">${escapeHtml(g.name)}</td>
+                        <td>${escapeHtml(g.code)}</td>
+                        <td>${g.sort_order ?? '-'}</td>
+                        <td>${g.is_active ? '<span class="text-green-600 text-xs font-semibold">Active</span>' : '<span class="text-gray-400 text-xs">Inactive</span>'}</td>
+                        <td><button onclick='openGradeModal(${JSON.stringify(g.id)})' class="text-blue-600 hover:underline text-xs font-medium mr-3">Edit</button><button onclick="deleteGrade('${g.id}')" class="text-red-500 hover:underline text-xs font-medium">Delete</button></td>
+                    </tr>`).join('') || `<tr><td colspan="5" class="text-center py-8 text-gray-400">No grades yet</td></tr>`;
+                populateGradeSelects();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        function openGradeModal(id) {
+            const g = id ? allGrades.find(x => x.id === id) : null;
+            document.getElementById('grade-id').value = g ? g.id : '';
+            document.getElementById('grade-name').value = g ? g.name : '';
+            document.getElementById('grade-code').value = g ? g.code : '';
+            document.getElementById('grade-order').value = g ? (g.sort_order ?? '') : '';
+            document.getElementById('grade-modal').classList.add('active');
+        }
+        function closeGradeModal() { document.getElementById('grade-modal').classList.remove('active'); }
+        async function saveGrade() {
+            const id = document.getElementById('grade-id').value;
+            const payload = {
+                name: document.getElementById('grade-name').value.trim(),
+                code: document.getElementById('grade-code').value.trim(),
+                sort_order: parseInt(document.getElementById('grade-order').value) || 0
+            };
+            if (!payload.name || !payload.code) { showToast('Name and code are required', 'error'); return; }
+            try {
+                const { error } = id
+                    ? await supabaseClient.from('grades').update(payload).eq('id', id)
+                    : await supabaseClient.from('grades').insert([payload]);
+                if (error) throw error;
+                showToast('Grade saved', 'success');
+                closeGradeModal();
+                await loadGrades();
+            } catch (e) { showToast('Could not save: ' + e.message, 'error'); }
+        }
+        async function deleteGrade(id) {
+            if (!confirm('Delete this grade? This cannot be undone.')) return;
+            const { error } = await supabaseClient.from('grades').delete().eq('id', id);
+            if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+            showToast('Grade deleted', 'success');
+            await loadGrades();
+        }
+
+        // ---------------- CLASSES ----------------
+        async function loadClasses() {
+            try {
+                const { data, error } = await supabaseClient.from('classes').select('*, grades(name), profiles:teacher_id(first_name, last_name)').order('created_at', { ascending: false });
+                if (error) throw error;
+                allClasses = data || [];
+                document.getElementById('classes-tbody').innerHTML = allClasses.map(c => `
+                    <tr>
+                        <td class="font-medium text-gray-900 dark:text-white">${escapeHtml(c.name)}</td>
+                        <td>${escapeHtml(c.grades?.name || '-')}</td>
+                        <td>${c.profiles ? escapeHtml(c.profiles.first_name + ' ' + c.profiles.last_name) : '<span class="text-gray-400">Unassigned</span>'}</td>
+                        <td>${escapeHtml(c.room_number || '-')}</td>
+                        <td>${c.capacity ?? '-'}</td>
+                        <td><button onclick='openClassModal(${JSON.stringify(c.id)})' class="text-blue-600 hover:underline text-xs font-medium mr-3">Edit</button><button onclick="deleteClass('${c.id}')" class="text-red-500 hover:underline text-xs font-medium">Delete</button></td>
+                    </tr>`).join('') || `<tr><td colspan="6" class="text-center py-8 text-gray-400">No classes yet</td></tr>`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        function openClassModal(id) {
+            const c = id ? allClasses.find(x => x.id === id) : null;
+            document.getElementById('class-id').value = c ? c.id : '';
+            document.getElementById('class-name').value = c ? c.name : '';
+            document.getElementById('class-code').value = c ? c.code : '';
+            document.getElementById('class-grade').value = c ? c.grade_id || '' : '';
+            document.getElementById('class-teacher').value = c ? c.teacher_id || '' : '';
+            document.getElementById('class-room').value = c ? (c.room_number || '') : '';
+            document.getElementById('class-capacity').value = c ? (c.capacity ?? '') : '';
+            document.getElementById('class-modal').classList.add('active');
+        }
+        function closeClassModal() { document.getElementById('class-modal').classList.remove('active'); }
+        async function saveClass() {
+            const id = document.getElementById('class-id').value;
+            const payload = {
+                name: document.getElementById('class-name').value.trim(),
+                code: document.getElementById('class-code').value.trim(),
+                grade_id: document.getElementById('class-grade').value || null,
+                teacher_id: document.getElementById('class-teacher').value || null,
+                room_number: document.getElementById('class-room').value.trim(),
+                capacity: parseInt(document.getElementById('class-capacity').value) || null
+            };
+            if (!payload.name || !payload.code) { showToast('Name and code are required', 'error'); return; }
+            try {
+                const { error } = id
+                    ? await supabaseClient.from('classes').update(payload).eq('id', id)
+                    : await supabaseClient.from('classes').insert([payload]);
+                if (error) throw error;
+                showToast('Class saved', 'success');
+                closeClassModal();
+                await loadClasses();
+            } catch (e) { showToast('Could not save: ' + e.message, 'error'); }
+        }
+        async function deleteClass(id) {
+            if (!confirm('Delete this class?')) return;
+            const { error } = await supabaseClient.from('classes').delete().eq('id', id);
+            if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+            showToast('Class deleted', 'success');
+            await loadClasses();
+        }
+
+        // ---------------- SUBJECTS ----------------
+        async function loadSubjects() {
+            try {
+                const { data, error } = await supabaseClient.from('subjects').select('*, grades(name), profiles:teacher_id(first_name, last_name)').order('created_at', { ascending: false });
+                if (error) throw error;
+                allSubjects = data || [];
+                document.getElementById('subjects-tbody').innerHTML = allSubjects.map(s => `
+                    <tr>
+                        <td class="font-medium text-gray-900 dark:text-white"><span class="inline-block w-3 h-3 rounded-full mr-2" style="background:${s.color || '#2563EB'}"></span>${escapeHtml(s.name)}</td>
+                        <td>${escapeHtml(s.code)}</td>
+                        <td>${escapeHtml(s.grades?.name || '-')}</td>
+                        <td>${s.profiles ? escapeHtml(s.profiles.first_name + ' ' + s.profiles.last_name) : '<span class="text-gray-400">Unassigned</span>'}</td>
+                        <td>${s.is_active ? '<span class="text-green-600 text-xs font-semibold">Active</span>' : '<span class="text-gray-400 text-xs">Inactive</span>'}</td>
+                        <td><button onclick='openSubjectModal(${JSON.stringify(s.id)})' class="text-blue-600 hover:underline text-xs font-medium mr-3">Edit</button><button onclick="deleteSubject('${s.id}')" class="text-red-500 hover:underline text-xs font-medium">Delete</button></td>
+                    </tr>`).join('') || `<tr><td colspan="6" class="text-center py-8 text-gray-400">No subjects yet</td></tr>`;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        function openSubjectModal(id) {
+            const s = id ? allSubjects.find(x => x.id === id) : null;
+            document.getElementById('subject-id').value = s ? s.id : '';
+            document.getElementById('subject-name').value = s ? s.name : '';
+            document.getElementById('subject-code').value = s ? s.code : '';
+            document.getElementById('subject-grade').value = s ? s.grade_id || '' : '';
+            document.getElementById('subject-teacher').value = s ? s.teacher_id || '' : '';
+            document.getElementById('subject-color').value = s ? (s.color || '#2563EB') : '#2563EB';
+            document.getElementById('subject-modal').classList.add('active');
+        }
+        function closeSubjectModal() { document.getElementById('subject-modal').classList.remove('active'); }
+        async function saveSubject() {
+            const id = document.getElementById('subject-id').value;
+            const payload = {
+                name: document.getElementById('subject-name').value.trim(),
+                code: document.getElementById('subject-code').value.trim(),
+                grade_id: document.getElementById('subject-grade').value || null,
+                teacher_id: document.getElementById('subject-teacher').value || null,
+                color: document.getElementById('subject-color').value,
+                is_active: true
+            };
+            if (!payload.name || !payload.code) { showToast('Name and code are required', 'error'); return; }
+            try {
+                const { error } = id
+                    ? await supabaseClient.from('subjects').update(payload).eq('id', id)
+                    : await supabaseClient.from('subjects').insert([payload]);
+                if (error) throw error;
+                showToast('Subject saved', 'success');
+                closeSubjectModal();
+                await loadSubjects();
+            } catch (e) { showToast('Could not save: ' + e.message, 'error'); }
+        }
+        async function deleteSubject(id) {
+            if (!confirm('Delete this subject? This will also remove related assessments and resources.')) return;
+            const { error } = await supabaseClient.from('subjects').delete().eq('id', id);
+            if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+            showToast('Subject deleted', 'success');
+            await loadSubjects();
+        }
+
+        // ---------------- SHARED SELECT POPULATORS ----------------
+        function populateGradeSelects() {
+            const opts = '<option value="">Select grade</option>' + allGrades.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+            document.getElementById('class-grade').innerHTML = opts;
+            document.getElementById('subject-grade').innerHTML = opts;
+        }
+        function populateTeacherSelects() {
+            const opts = '<option value="">Unassigned</option>' + allTeachers.map(t => `<option value="${t.id}">${escapeHtml(t.first_name)} ${escapeHtml(t.last_name)}</option>`).join('');
+            document.getElementById('class-teacher').innerHTML = opts;
+            document.getElementById('subject-teacher').innerHTML = opts;
+        }
+
+        function initDarkMode() {
+            const saved = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = saved ? saved === 'true' : prefersDark;
+            if (isDark) { document.documentElement.classList.add('dark'); document.getElementById('dark-mode-icon').className = 'fas fa-sun'; }
+        }
+        document.getElementById('dark-mode-toggle')?.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            document.getElementById('dark-mode-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        (async function init() {
+            initDarkMode();
+            const p = await checkAuth();
+            if (!p) return;
+            if (p.role !== 'admin') {
+                document.getElementById('access-denied').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('admin-content').classList.remove('hidden');
+            await Promise.all([loadOverview(), loadUsers(), loadGrades()]);
+            await Promise.all([loadClasses(), loadSubjects()]);
+        })();
+    </script>
+</body>
+</html>
