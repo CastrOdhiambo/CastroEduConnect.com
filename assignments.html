@@ -1650,7 +1650,7 @@
             
             if (q.question_type === 'multiple_choice' && q.choices) {
                 choicesHtml = q.choices.map((choice, idx) => `
-                    <div class="choice-option ${selectedValue === idx ? 'selected' : ''}" onclick="selectChoice(${q.id}, ${idx})" data-question="${q.id}" data-choice="${idx}">
+                    <div class="choice-option ${selectedValue === idx ? 'selected' : ''}" onclick="selectChoice('${q.id}', ${idx})" data-question="${q.id}" data-choice="${idx}">
                         <span class="choice-letter">${String.fromCharCode(65 + idx)}</span>
                         <span class="text-gray-700 dark:text-gray-300">${choice.choice_text}</span>
                         ${selectedValue === idx ? '<i class="fas fa-check-circle text-blue-600 dark:text-blue-400 ml-auto"></i>' : ''}
@@ -1659,7 +1659,7 @@
             } else if (q.question_type === 'true_false') {
                 const trueFalseOptions = ['True', 'False'];
                 choicesHtml = trueFalseOptions.map((text, idx) => `
-                    <div class="choice-option ${selectedValue === idx ? 'selected' : ''}" onclick="selectChoice(${q.id}, ${idx})" data-question="${q.id}" data-choice="${idx}">
+                    <div class="choice-option ${selectedValue === idx ? 'selected' : ''}" onclick="selectChoice('${q.id}', ${idx})" data-question="${q.id}" data-choice="${idx}">
                         <span class="choice-letter">${idx === 0 ? 'T' : 'F'}</span>
                         <span class="text-gray-700 dark:text-gray-300">${text}</span>
                         ${selectedValue === idx ? '<i class="fas fa-check-circle text-blue-600 dark:text-blue-400 ml-auto"></i>' : ''}
@@ -1670,7 +1670,7 @@
                 choicesHtml = `
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Answer</label>
-                        <textarea rows="4" onchange="saveShortAnswer(${q.id}, this.value)" 
+                        <textarea rows="4" onchange="saveShortAnswer('${q.id}', this.value)" 
                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">${answer}</textarea>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${q.question_type === 'essay' ? 'Write a detailed response...' : 'Write a brief answer...'}</p>
                     </div>

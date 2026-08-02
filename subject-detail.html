@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Course - CastroEduConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        .topic-card { border: 1px solid #e5e7eb; border-radius: 1rem; overflow: hidden; }
+        .dark .topic-card { border-color: #374151; }
+        .topic-header { cursor: pointer; padding: 1.1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+        .topic-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+        .topic-card.open .topic-body { max-height: 3000px; }
+        .topic-card.open .chevron { transform: rotate(180deg); }
+        .chevron { transition: transform .2s ease; }
+        .subtopic-item { border-left: 3px solid #2563EB; }
+        .resource-chip { display: flex; align-items: center; gap: .6rem; padding: .7rem 1rem; border-radius: .75rem; background: #f9fafb; }
+        .dark .resource-chip { background: rgba(255,255,255,.03); }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
+            </div>
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
+                <a href="subjects.html" class="sidebar-link active"><i class="fas fa-book w-5"></i> Subjects</a>
+                <a href="assignments.html" class="sidebar-link"><i class="fas fa-tasks w-5"></i> Assignments</a>
+                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
+                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
+                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
+                <a href="announcements.html" class="sidebar-link"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+                <a href="discussions.html" class="sidebar-link"><i class="fas fa-comments w-5"></i> Discussions</a>
+                <a href="admin.html" class="sidebar-link"><i class="fas fa-user-shield w-5"></i> Admin Console</a>
+                <a href="profile.html" class="sidebar-link"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="settings.html" class="sidebar-link"><i class="fas fa-cog w-5"></i> Settings</a>
+                <a href="#" onclick="logoutUser(); return false;" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 min-h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
+                <div class="flex-1 max-w-xl mx-4"></div>
+                <div class="flex items-center space-x-4">
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="flex items-center space-x-3">
+                        <div id="header-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">--</div>
+                        <div class="hidden sm:block">
+                            <div id="header-name" class="text-sm font-semibold text-gray-900 dark:text-white">Loading...</div>
+                            <div id="header-role" class="text-xs text-gray-500 dark:text-gray-400 capitalize">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="no-access" class="hidden p-6 text-center py-24">
+            <i class="fas fa-lock text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <p class="text-gray-500 dark:text-gray-400 mb-4">You need to be enrolled in this subject to view its content.</p>
+            <button onclick="window.location.href='subjects.html'" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold">Back to Subjects</button>
+        </div>
+
+        <div id="course-content" class="p-6 hidden max-w-5xl mx-auto">
+            <button onclick="window.location.href='subjects.html'" class="text-blue-600 dark:text-blue-400 mb-4 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back to Subjects</button>
+
+            <!-- Course header -->
+            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm p-6 mb-6 flex items-start justify-between flex-wrap gap-4">
+                <div class="flex items-start gap-4">
+                    <div id="subject-icon" class="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"><i class="fas fa-book text-3xl"></i></div>
+                    <div>
+                        <h1 id="subject-name" class="text-2xl font-bold text-gray-900 dark:text-white"></h1>
+                        <p id="subject-code" class="text-sm text-gray-500 dark:text-gray-400"></p>
+                        <p id="subject-desc" class="text-gray-600 dark:text-gray-400 mt-2 max-w-2xl"></p>
+                        <p id="subject-teacher" class="text-sm text-gray-500 dark:text-gray-400 mt-2"><i class="fas fa-chalkboard-teacher mr-1"></i></p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <a id="link-assignments" href="assignments.html" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"><i class="fas fa-tasks mr-1"></i>Assignments</a>
+                    <a id="link-assessments" href="assessments.html" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"><i class="fas fa-question-circle mr-1"></i>Assessments</a>
+                    <a id="link-discussions" href="discussions.html" class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700"><i class="fas fa-comments mr-1"></i>Discuss</a>
+                </div>
+            </div>
+
+            <!-- Manage bar (teacher/admin only) -->
+            <div id="manage-bar" class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 mb-6 flex items-center justify-between flex-wrap gap-3">
+                <p class="text-sm text-blue-700 dark:text-blue-300"><i class="fas fa-tools mr-2"></i>You manage this subject's content.</p>
+                <button onclick="openTopicModal()" class="btn-primary px-5 py-2 rounded-xl text-white font-semibold text-sm"><i class="fas fa-plus mr-2"></i>Add Topic</button>
+            </div>
+
+            <!-- Topics accordion -->
+            <div id="topics-list" class="space-y-4 mb-8">
+                <div class="skeleton rounded-2xl h-20"></div>
+                <div class="skeleton rounded-2xl h-20"></div>
+            </div>
+            <div id="topics-empty" class="hidden text-center py-12 bg-white dark:bg-gray-800 rounded-2xl">
+                <i class="fas fa-layer-group text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                <p class="text-gray-500 dark:text-gray-400">No topics have been added to this subject yet.</p>
+            </div>
+
+            <!-- General resources (not tied to a topic) -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white"><i class="fas fa-folder-open mr-2 text-blue-600"></i>General Resources</h3>
+                    <button id="general-upload-btn" onclick="openResourceModal(null)" class="hidden text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline"><i class="fas fa-upload mr-1"></i>Upload</button>
+                </div>
+                <div id="general-resources" class="space-y-2"><p class="text-sm text-gray-400">Loading...</p></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Topic modal -->
+    <div id="topic-modal" class="modal-overlay">
+        <div class="modal-content max-w-lg">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Topic</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="topic-id" />
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label><input id="topic-title" type="text" placeholder="e.g. Unit 1: Algebra" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label><textarea id="topic-description" rows="3" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"></textarea></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Order</label><input id="topic-order" type="number" value="0" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                    <div class="flex items-end pb-3"><label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input id="topic-published" type="checkbox" checked class="rounded" /> Published (visible to students)</label></div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeTopicModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="saveTopic()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub-topic (note) modal -->
+    <div id="note-modal" class="modal-overlay">
+        <div class="modal-content max-w-lg">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Note</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="note-id" />
+                <input type="hidden" id="note-topic-id" />
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label><input id="note-title" type="text" placeholder="e.g. Solving linear equations" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label><textarea id="note-content" rows="6" placeholder="Write the lesson notes here..." class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"></textarea></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Video URL (optional)</label><input id="note-video" type="url" placeholder="https://youtube.com/..." class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeNoteModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="saveNote()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource upload modal -->
+    <div id="resource-modal" class="modal-overlay">
+        <div class="modal-content max-w-lg">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Upload Resource</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="resource-topic-id" />
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label><input id="resource-title" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label><input id="resource-description" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">File</label>
+                    <input id="resource-file" type="file" class="w-full text-sm text-gray-600 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-50 file:text-blue-600 dark:file:bg-blue-900/30 dark:file:text-blue-400" />
+                    <p class="text-xs text-gray-400 mt-1">PDF, Word, PowerPoint, image, video, audio, or zip — up to 10MB.</p>
+                </div>
+                <div id="resource-upload-progress" class="hidden text-sm text-blue-600 dark:text-blue-400"><i class="fas fa-spinner fa-spin mr-2"></i>Uploading...</div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeResourceModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="saveResource()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const params = new URLSearchParams(window.location.search);
+        const subjectId = params.get('id');
+
+        let currentUser = null;
+        let userProfile = null;
+        let subject = null;
+        let topics = [];
+        let notesByTopic = {};
+        let resourcesByTopic = {};
+        let generalResources = [];
+        let canManage = false;
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<div class="flex items-center justify-between"><span>${message}</span><button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white"><i class="fas fa-times"></i></button></div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = 'all 0.3s ease'; setTimeout(() => toast.remove(), 300); }, duration);
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        async function logoutUser() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+        function initials(first, last) { return `${(first || '?')[0] || ''}${(last || '')[0] || ''}`.toUpperCase() || '?'; }
+        function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+
+        const fileIcons = { pdf: 'fa-file-pdf text-red-500', word: 'fa-file-word text-blue-500', powerpoint: 'fa-file-powerpoint text-orange-500', image: 'fa-file-image text-purple-500', video: 'fa-file-video text-pink-500', audio: 'fa-file-audio text-green-500', zip: 'fa-file-zipper text-yellow-600', other: 'fa-file text-gray-400' };
+        function fileTypeFromName(name) {
+            const ext = (name.split('.').pop() || '').toLowerCase();
+            if (ext === 'pdf') return 'pdf';
+            if (['doc', 'docx'].includes(ext)) return 'word';
+            if (['ppt', 'pptx'].includes(ext)) return 'powerpoint';
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image';
+            if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'video';
+            if (['mp3', 'wav', 'ogg'].includes(ext)) return 'audio';
+            if (['zip', 'rar', '7z'].includes(ext)) return 'zip';
+            return 'other';
+        }
+
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return null; }
+            currentUser = session.user;
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (error) { showToast('Could not load your profile', 'error'); return null; }
+            userProfile = data;
+            document.getElementById('header-name').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email;
+            document.getElementById('header-role').textContent = data.role;
+            document.getElementById('header-avatar').textContent = initials(data.first_name, data.last_name);
+            return data;
+        }
+
+        async function loadSubject() {
+            if (!subjectId) { window.location.href = 'subjects.html'; return false; }
+            const { data, error } = await supabaseClient
+                .from('subjects')
+                .select('*, grades(name), profiles:teacher_id(first_name, last_name)')
+                .eq('id', subjectId).single();
+            if (error || !data) { showToast('Subject not found', 'error'); window.location.href = 'subjects.html'; return false; }
+            subject = data;
+
+            canManage = userProfile.role === 'admin' || (userProfile.role === 'teacher' && subject.teacher_id === currentUser.id);
+
+            // Access check for learners: must be enrolled
+            if (userProfile.role === 'learner') {
+                const { data: enroll } = await supabaseClient.from('subject_enrollments').select('id').eq('subject_id', subjectId).eq('learner_id', currentUser.id).eq('status', 'active').maybeSingle();
+                if (!enroll) {
+                    document.getElementById('no-access').classList.remove('hidden');
+                    return false;
+                }
+            }
+
+            document.getElementById('subject-icon').style.background = (subject.color || '#2563EB') + '20';
+            document.getElementById('subject-icon').style.color = subject.color || '#2563EB';
+            document.getElementById('subject-name').textContent = subject.name;
+            document.getElementById('subject-code').textContent = `${subject.code} · ${subject.grades?.name || ''}`;
+            document.getElementById('subject-desc').textContent = subject.description || 'No description provided.';
+            const teacherName = subject.profiles ? `${subject.profiles.first_name} ${subject.profiles.last_name}` : 'Unassigned';
+            document.getElementById('subject-teacher').innerHTML = `<i class="fas fa-chalkboard-teacher mr-1"></i>${escapeHtml(teacherName)}`;
+
+            if (canManage) {
+                document.getElementById('manage-bar').classList.remove('hidden');
+                document.getElementById('general-upload-btn').classList.remove('hidden');
+            }
+            document.getElementById('course-content').classList.remove('hidden');
+            return true;
+        }
+
+        async function loadTopics() {
+            let query = supabaseClient.from('topics').select('*').eq('subject_id', subjectId).order('sort_order');
+            if (!canManage) query = query.eq('is_published', true);
+            const { data, error } = await query;
+            if (error) { console.error(error); return; }
+            topics = data || [];
+
+            const { data: allNotes } = await supabaseClient.from('sub_topics').select('*').in('topic_id', topics.map(t => t.id).length ? topics.map(t => t.id) : ['00000000-0000-0000-0000-000000000000']).order('sort_order');
+            notesByTopic = {};
+            (allNotes || []).forEach(n => { (notesByTopic[n.topic_id] = notesByTopic[n.topic_id] || []).push(n); });
+
+            const { data: allResources } = await supabaseClient.from('resources').select('*').eq('subject_id', subjectId).eq('is_published', true).order('created_at', { ascending: false });
+            resourcesByTopic = {};
+            generalResources = [];
+            (allResources || []).forEach(r => {
+                if (r.topic_id) (resourcesByTopic[r.topic_id] = resourcesByTopic[r.topic_id] || []).push(r);
+                else generalResources.push(r);
+            });
+
+            renderTopics();
+            renderGeneralResources();
+        }
+
+        function resourceChip(r) {
+            const icon = fileIcons[r.file_type] || fileIcons.other;
+            return `
+                <div class="resource-chip">
+                    <i class="fas ${icon} text-xl"></i>
+                    <div class="flex-1 min-w-0">
+                        <a href="${r.file_url}" target="_blank" rel="noopener" class="font-medium text-gray-900 dark:text-white hover:text-blue-600 truncate block">${escapeHtml(r.title)}</a>
+                        ${r.description ? `<p class="text-xs text-gray-500 dark:text-gray-400 truncate">${escapeHtml(r.description)}</p>` : ''}
+                    </div>
+                    <a href="${r.file_url}" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 text-sm flex-shrink-0"><i class="fas fa-download"></i></a>
+                    ${canManage ? `<button onclick="deleteResource('${r.id}')" class="text-red-400 hover:text-red-600 text-sm flex-shrink-0"><i class="fas fa-trash"></i></button>` : ''}
+                </div>`;
+        }
+
+        function renderGeneralResources() {
+            const el = document.getElementById('general-resources');
+            if (!generalResources.length) { el.innerHTML = '<p class="text-sm text-gray-400">No general resources yet.</p>'; return; }
+            el.innerHTML = generalResources.map(resourceChip).join('');
+        }
+
+        function renderTopics() {
+            const list = document.getElementById('topics-list');
+            const empty = document.getElementById('topics-empty');
+            if (!topics.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+
+            list.innerHTML = topics.map((t, i) => {
+                const notes = notesByTopic[t.id] || [];
+                const resources = resourcesByTopic[t.id] || [];
+                return `
+                <div class="topic-card bg-white dark:bg-gray-800 ${i === 0 ? 'open' : ''}" id="topic-${t.id}">
+                    <div class="topic-header" onclick="toggleTopic('${t.id}')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg gradient-bg flex items-center justify-center text-white text-sm font-bold">${i + 1}</div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900 dark:text-white">${escapeHtml(t.title)} ${!t.is_published ? '<span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full ml-1">Draft</span>' : ''}</h3>
+                                ${t.description ? `<p class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(t.description)}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            ${canManage ? `
+                                <button onclick="event.stopPropagation(); openTopicModal('${t.id}')" class="text-gray-400 hover:text-blue-600" title="Edit topic"><i class="fas fa-edit"></i></button>
+                                <button onclick="event.stopPropagation(); deleteTopic('${t.id}')" class="text-gray-400 hover:text-red-600" title="Delete topic"><i class="fas fa-trash"></i></button>
+                            ` : ''}
+                            <i class="fas fa-chevron-down chevron text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div class="topic-body px-5 pb-5">
+                        <div class="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
+                            ${notes.length ? notes.map(n => `
+                                <div class="subtopic-item pl-4 py-2">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-gray-900 dark:text-white">${escapeHtml(n.title)}</h4>
+                                        ${canManage ? `<div class="flex gap-2">
+                                            <button onclick="openNoteModal('${t.id}', '${n.id}')" class="text-gray-400 hover:text-blue-600 text-xs"><i class="fas fa-edit"></i></button>
+                                            <button onclick="deleteNote('${n.id}', '${t.id}')" class="text-gray-400 hover:text-red-600 text-xs"><i class="fas fa-trash"></i></button>
+                                        </div>` : ''}
+                                    </div>
+                                    ${n.content ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1 whitespace-pre-line">${escapeHtml(n.content)}</p>` : ''}
+                                    ${n.video_url ? `<a href="${escapeHtml(n.video_url)}" target="_blank" rel="noopener" class="text-sm text-blue-600 dark:text-blue-400 mt-1 inline-block"><i class="fas fa-video mr-1"></i>Watch video</a>` : ''}
+                                </div>
+                            `).join('') : `<p class="text-sm text-gray-400 pl-4">No notes added yet.</p>`}
+
+                            ${resources.length ? `<div class="space-y-2 pt-2">${resources.map(resourceChip).join('')}</div>` : ''}
+
+                            ${canManage ? `
+                                <div class="flex gap-4 pt-2">
+                                    <button onclick="openNoteModal('${t.id}')" class="text-blue-600 dark:text-blue-400 text-sm font-medium"><i class="fas fa-plus mr-1"></i>Add Note</button>
+                                    <button onclick="openResourceModal('${t.id}')" class="text-blue-600 dark:text-blue-400 text-sm font-medium"><i class="fas fa-upload mr-1"></i>Upload Resource</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleTopic(id) { document.getElementById('topic-' + id).classList.toggle('open'); }
+
+        // ---------------- TOPIC CRUD ----------------
+        function openTopicModal(id) {
+            const t = id ? topics.find(x => x.id === id) : null;
+            document.getElementById('topic-id').value = t ? t.id : '';
+            document.getElementById('topic-title').value = t ? t.title : '';
+            document.getElementById('topic-description').value = t ? (t.description || '') : '';
+            document.getElementById('topic-order').value = t ? (t.sort_order ?? topics.length) : topics.length;
+            document.getElementById('topic-published').checked = t ? t.is_published : true;
+            document.getElementById('topic-modal').classList.add('active');
+        }
+        function closeTopicModal() { document.getElementById('topic-modal').classList.remove('active'); }
+        async function saveTopic() {
+            const id = document.getElementById('topic-id').value;
+            const payload = {
+                subject_id: subjectId,
+                title: document.getElementById('topic-title').value.trim(),
+                description: document.getElementById('topic-description').value.trim(),
+                sort_order: parseInt(document.getElementById('topic-order').value) || 0,
+                is_published: document.getElementById('topic-published').checked
+            };
+            if (!payload.title) { showToast('Title is required', 'error'); return; }
+            try {
+                const { error } = id
+                    ? await supabaseClient.from('topics').update(payload).eq('id', id)
+                    : await supabaseClient.from('topics').insert([payload]);
+                if (error) throw error;
+                showToast('Topic saved', 'success');
+                closeTopicModal();
+                await loadTopics();
+            } catch (e) { showToast('Could not save: ' + e.message, 'error'); }
+        }
+        async function deleteTopic(id) {
+            if (!confirm('Delete this topic? Its notes and resource links will be removed too.')) return;
+            const { error } = await supabaseClient.from('topics').delete().eq('id', id);
+            if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+            showToast('Topic deleted', 'success');
+            await loadTopics();
+        }
+
+        // ---------------- NOTE (SUB-TOPIC) CRUD ----------------
+        function openNoteModal(topicId, noteId) {
+            const n = noteId ? (notesByTopic[topicId] || []).find(x => x.id === noteId) : null;
+            document.getElementById('note-id').value = n ? n.id : '';
+            document.getElementById('note-topic-id').value = topicId;
+            document.getElementById('note-title').value = n ? n.title : '';
+            document.getElementById('note-content').value = n ? (n.content || '') : '';
+            document.getElementById('note-video').value = n ? (n.video_url || '') : '';
+            document.getElementById('note-modal').classList.add('active');
+        }
+        function closeNoteModal() { document.getElementById('note-modal').classList.remove('active'); }
+        async function saveNote() {
+            const id = document.getElementById('note-id').value;
+            const topicId = document.getElementById('note-topic-id').value;
+            const payload = {
+                topic_id: topicId,
+                title: document.getElementById('note-title').value.trim(),
+                content: document.getElementById('note-content').value.trim(),
+                video_url: document.getElementById('note-video').value.trim() || null
+            };
+            if (!payload.title) { showToast('Title is required', 'error'); return; }
+            try {
+                const { error } = id
+                    ? await supabaseClient.from('sub_topics').update(payload).eq('id', id)
+                    : await supabaseClient.from('sub_topics').insert([payload]);
+                if (error) throw error;
+                showToast('Note saved', 'success');
+                closeNoteModal();
+                await loadTopics();
+                document.getElementById('topic-' + topicId)?.classList.add('open');
+            } catch (e) { showToast('Could not save: ' + e.message, 'error'); }
+        }
+        async function deleteNote(id, topicId) {
+            if (!confirm('Delete this note?')) return;
+            const { error } = await supabaseClient.from('sub_topics').delete().eq('id', id);
+            if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+            showToast('Note deleted', 'success');
+            await loadTopics();
+            document.getElementById('topic-' + topicId)?.classList.add('open');
+        }
+
+        // ---------------- RESOURCE UPLOAD ----------------
+        function openResourceModal(topicId) {
+            document.getElementById('resource-topic-id').value = topicId || '';
+            document.getElementById('resource-title').value = '';
+            document.getElementById('resource-description').value = '';
+            document.getElementById('resource-file').value = '';
+            document.getElementById('resource-upload-progress').classList.add('hidden');
+            document.getElementById('resource-modal').classList.add('active');
+        }
+        function closeResourceModal() { document.getElementById('resource-modal').classList.remove('active'); }
+        async function saveResource() {
+            const topicId = document.getElementById('resource-topic-id').value || null;
+            const title = document.getElementById('resource-title').value.trim();
+            const description = document.getElementById('resource-description').value.trim();
+            const fileInput = document.getElementById('resource-file');
+            const file = fileInput.files[0];
+            if (!title || !file) { showToast('Title and a file are required', 'error'); return; }
+            if (file.size > 10 * 1024 * 1024) { showToast('File exceeds 10MB limit', 'error'); return; }
+
+            document.getElementById('resource-upload-progress').classList.remove('hidden');
+            try {
+                const path = `${subjectId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                const { error: uploadError } = await supabaseClient.storage.from('resources').upload(path, file);
+                if (uploadError) throw uploadError;
+                const { data: urlData } = supabaseClient.storage.from('resources').getPublicUrl(path);
+
+                const { error } = await supabaseClient.from('resources').insert([{
+                    subject_id: subjectId,
+                    topic_id: topicId,
+                    teacher_id: currentUser.id,
+                    title, description,
+                    file_url: urlData.publicUrl,
+                    file_type: fileTypeFromName(file.name),
+                    file_size: file.size,
+                    is_published: true
+                }]);
+                if (error) throw error;
+
+                showToast('Resource uploaded!', 'success');
+                closeResourceModal();
+                await loadTopics();
+                if (topicId) document.getElementById('topic-' + topicId)?.classList.add('open');
+            } catch (e) {
+                console.error(e);
+                showToast('Upload failed: ' + e.message, 'error');
+            } finally {
+                document.getElementById('resource-upload-progress').classList.add('hidden');
+            }
+        }
+        async function deleteResource(id) {
+            if (!confirm('Delete this resource?')) return;
+            const { error } = await supabaseClient.from('resources').delete().eq('id', id);
+            if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+            showToast('Resource deleted', 'success');
+            await loadTopics();
+        }
+
+        function initDarkMode() {
+            const saved = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = saved ? saved === 'true' : prefersDark;
+            if (isDark) { document.documentElement.classList.add('dark'); document.getElementById('dark-mode-icon').className = 'fas fa-sun'; }
+        }
+        document.getElementById('dark-mode-toggle')?.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            document.getElementById('dark-mode-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        (async function init() {
+            initDarkMode();
+            const p = await checkAuth();
+            if (!p) return;
+            const ok = await loadSubject();
+            if (!ok) return;
+            await loadTopics();
+        })();
+    </script>
+</body>
+</html>

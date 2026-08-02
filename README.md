@@ -78,6 +78,33 @@ layer and three pages that were still static mockups:
     - `discussions.html` — a per-subject discussion forum: start a thread, reply, upvote,
       and (for teachers/admins) pin, close, or mark a reply as the best answer.
 
+11. **Clicking into an enrolled subject only opened a shallow info popup** — no notes, no
+    topics, no organized resources, and no way for a teacher to add any of that short of
+    the raw Table Editor. **Built `subject-detail.html`** — a Moodle-style course page:
+    - Students see the subject's topics as an accordion, each with its notes/lesson content
+      (and optional video links) and any resources filed under that topic, plus a "General
+      Resources" section for subject-wide files.
+    - Teachers (who own the subject) and admins get an inline management bar on the same
+      page — add/edit/delete topics, add/edit/delete notes under each topic, and upload
+      resources (PDF, Word, PowerPoint, images, video, audio, zip) straight into Supabase
+      Storage, scoped to a specific topic or general. No separate admin screen needed for
+      day-to-day content — it's managed right where students see it, the way Moodle's
+      course page works.
+    - `subjects.html`'s "View" button now opens this page instead of the old info-only
+      popup.
+
+12. **Assessment/assignment questions couldn't be answered at all — this is why marking
+    never worked.** Both `assessments.html` and `assignments.html` build each answer
+    choice's `onclick` handler as a plain JavaScript template string:
+    `onclick="selectChoice(${q.id}, ${idx})"`. Question IDs are UUIDs (e.g.
+    `3fa85f64-5717-4562-...`), and dropping one into that attribute **unquoted** produces
+    invalid JavaScript — `selectChoice(3fa85f64-5717-4562-...)`, which the browser tries to
+    parse as subtraction between undefined variables and fails silently. Clicking an answer
+    (or typing a short answer) did nothing, `currentAttempt.answers` stayed empty, and every
+    submission scored zero. **Fixed:** the question ID is now quoted as a string in every
+    `onclick`/`onchange` handler across both files (6 occurrences), so selecting an answer,
+    typing a short answer, and auto-marking on submit all work correctly.
+
 Everything else — your Bento-style layout, glassmorphism, dark mode, the assignment/quiz
 engine with auto-marking, the subjects/enrollment flow, the resources library — was already
 built and is untouched other than the fixes above. Every page's sidebar now links to
@@ -155,6 +182,7 @@ Then in the repo: **Settings → Pages → Deploy from branch → main → / (ro
 ├── forgot-password.html     Password reset request
 ├── dashboard.html            Role-aware dashboard with live stats
 ├── subjects.html             Browse/enroll in subjects
+├── subject-detail.html         Moodle-style course page: topics, notes, resources (new)
 ├── assignments.html          Assignment list, attempt flow, auto-marking
 ├── assessments.html          Quiz/CAT/exam builder & attempt flow
 ├── results.html              Grades & performance
