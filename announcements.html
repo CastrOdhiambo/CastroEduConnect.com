@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Announcements - CastroEduConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
+            </div>
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
+                <a href="subjects.html" class="sidebar-link"><i class="fas fa-book w-5"></i> Subjects</a>
+                <a href="assignments.html" class="sidebar-link"><i class="fas fa-tasks w-5"></i> Assignments</a>
+                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
+                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
+                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
+                <a href="announcements.html" class="sidebar-link active"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+                <a href="discussions.html" class="sidebar-link"><i class="fas fa-comments w-5"></i> Discussions</a>
+                <a href="admin.html" class="sidebar-link"><i class="fas fa-user-shield w-5"></i> Admin Console</a>
+                <a href="profile.html" class="sidebar-link"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="settings.html" class="sidebar-link"><i class="fas fa-cog w-5"></i> Settings</a>
+                <a href="#" onclick="logoutUser(); return false;" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 min-h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
+                <div class="flex-1 max-w-xl mx-4"><div class="relative"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input id="search-input" type="text" placeholder="Search announcements..." class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white" /></div></div>
+                <div class="flex items-center space-x-4">
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="flex items-center space-x-3">
+                        <div id="header-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">--</div>
+                        <div class="hidden sm:block">
+                            <div id="header-name" class="text-sm font-semibold text-gray-900 dark:text-white">Loading...</div>
+                            <div id="header-role" class="text-xs text-gray-500 dark:text-gray-400 capitalize">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Announcements</h1>
+                <button id="post-btn" onclick="openPostModal()" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold hidden"><i class="fas fa-plus mr-2"></i>Post Announcement</button>
+            </div>
+
+            <div id="announcements-list" class="space-y-6">
+                <div class="skeleton rounded-2xl h-32"></div>
+                <div class="skeleton rounded-2xl h-32"></div>
+            </div>
+            <div id="empty-state" class="hidden text-center py-16">
+                <i class="fas fa-bullhorn text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400">No announcements yet.</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="post-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Post Announcement</h3>
+                <button onclick="closePostModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                    <input id="ann-title" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
+                    <textarea id="ann-content" rows="4" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
+                    <select id="ann-priority" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="update">Update</option>
+                        <option value="important">Important</option>
+                        <option value="reminder">Reminder</option>
+                    </select>
+                </div>
+                <button onclick="submitAnnouncement()" class="w-full btn-primary py-3 rounded-xl text-white font-semibold"><i class="fas fa-paper-plane mr-2"></i>Post</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userProfile = null;
+        let allAnnouncements = [];
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `<div class="flex items-center justify-between"><span>${message}</span><button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white"><i class="fas fa-times"></i></button></div>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = 'all 0.3s ease'; setTimeout(() => toast.remove(), 300); }, duration);
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        async function logoutUser() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+        function initials(first, last) { return `${(first || '?')[0] || ''}${(last || '')[0] || ''}`.toUpperCase() || '?'; }
+        function timeAgo(dateStr) {
+            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return `${Math.floor(diff/86400)}d ago`;
+        }
+
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return null; }
+            currentUser = session.user;
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (error) { showToast('Could not load your profile', 'error'); return null; }
+            userProfile = data;
+            document.getElementById('header-name').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email;
+            document.getElementById('header-role').textContent = data.role;
+            document.getElementById('header-avatar').textContent = initials(data.first_name, data.last_name);
+            if (data.role === 'admin' || data.role === 'teacher') {
+                document.getElementById('post-btn').classList.remove('hidden');
+            }
+            return data;
+        }
+
+        const priorityStyle = {
+            important: { border: 'border-blue-600', badge: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
+            update: { border: 'border-green-600', badge: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' },
+            reminder: { border: 'border-yellow-600', badge: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' },
+        };
+
+        function renderAnnouncements(list) {
+            const container = document.getElementById('announcements-list');
+            const empty = document.getElementById('empty-state');
+            if (!list.length) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+            container.innerHTML = list.map(a => {
+                const style = priorityStyle[a.priority] || priorityStyle.update;
+                const authorName = a.profiles ? `${a.profiles.first_name || ''} ${a.profiles.last_name || ''}`.trim() : 'CastroEduConnect';
+                return `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 ${style.border}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3 flex-wrap gap-y-2">
+                                ${a.is_pinned ? '<span class="px-3 py-1 bg-gray-800 text-white text-xs font-semibold rounded-full"><i class="fas fa-thumbtack mr-1"></i>Pinned</span>' : ''}
+                                <span class="px-3 py-1 ${style.badge} text-xs font-semibold rounded-full capitalize">${a.priority}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Posted ${timeAgo(a.published_at || a.created_at)} by ${authorName}</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-2">${escapeHtml(a.title)}</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mt-2 whitespace-pre-line">${escapeHtml(a.content)}</p>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        async function loadAnnouncements() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('announcements')
+                    .select('*, profiles:author_id(first_name, last_name)')
+                    .eq('is_published', true)
+                    .order('is_pinned', { ascending: false })
+                    .order('published_at', { ascending: false });
+                if (error) throw error;
+                allAnnouncements = data || [];
+                renderAnnouncements(allAnnouncements);
+            } catch (e) {
+                console.error(e);
+                document.getElementById('announcements-list').innerHTML = '';
+                document.getElementById('empty-state').classList.remove('hidden');
+                showToast('Could not load announcements', 'error');
+            }
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            renderAnnouncements(allAnnouncements.filter(a =>
+                a.title.toLowerCase().includes(q) || a.content.toLowerCase().includes(q)
+            ));
+        });
+
+        function openPostModal() { document.getElementById('post-modal').classList.add('active'); }
+        function closePostModal() {
+            document.getElementById('post-modal').classList.remove('active');
+            document.getElementById('ann-title').value = '';
+            document.getElementById('ann-content').value = '';
+        }
+        async function submitAnnouncement() {
+            const title = document.getElementById('ann-title').value.trim();
+            const content = document.getElementById('ann-content').value.trim();
+            const priority = document.getElementById('ann-priority').value;
+            if (!title || !content) { showToast('Please fill in title and content', 'error'); return; }
+            try {
+                const { error } = await supabaseClient.from('announcements').insert([{
+                    title, content, priority, author_id: currentUser.id, target_role: 'all', is_published: true
+                }]);
+                if (error) throw error;
+                showToast('Announcement posted!', 'success');
+                closePostModal();
+                await loadAnnouncements();
+            } catch (e) {
+                console.error(e);
+                showToast('Could not post: ' + e.message, 'error');
+            }
+        }
+
+        function initDarkMode() {
+            const saved = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = saved ? saved === 'true' : prefersDark;
+            if (isDark) { document.documentElement.classList.add('dark'); document.getElementById('dark-mode-icon').className = 'fas fa-sun'; }
+        }
+        document.getElementById('dark-mode-toggle')?.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            document.getElementById('dark-mode-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        (async function init() {
+            initDarkMode();
+            const p = await checkAuth();
+            if (!p) return;
+            await loadAnnouncements();
+        })();
+    </script>
+</body>
+</html>

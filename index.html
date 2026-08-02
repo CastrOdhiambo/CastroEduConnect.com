@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CastroEduConnect - Connecting Learners, Empowering Futures</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <nav class="fixed top-0 w-full z-50 glass border-b border-white/10">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-white text-xl"></i>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">Home</a>
+                    <a href="#features" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">Features</a>
+                    <a href="#about" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">About</a>
+                    <a href="#contact" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition">Contact</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.href='login.html'" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 transition font-medium">Login</button>
+                    <button onclick="window.location.href='register.html'" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold">Get Started <i class="fas fa-arrow-right ml-2"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="pt-32 pb-20 hero-pattern">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8 animate-slide-up">
+                    <div class="inline-flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full text-sm font-medium">
+                        <i class="fas fa-sparkles"></i>
+                        <span>Revolutionizing Education</span>
+                    </div>
+                    <h1 class="text-5xl lg:text-6xl font-black leading-tight">
+                        <span class="text-gray-900 dark:text-white">Connecting Learners,</span><br />
+                        <span class="gradient-text">Empowering Futures</span>
+                    </h1>
+                    <p class="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">CastroEduConnect is a modern AI-powered learning management system that transforms how students learn, teachers teach, and administrators manage education.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="window.location.href='register.html'" class="btn-primary px-8 py-4 rounded-2xl text-white font-semibold text-lg flex items-center space-x-2">
+                            <span>Start Learning</span> <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button class="px-8 py-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-lg hover:border-blue-500 transition flex items-center space-x-2">
+                            <i class="fas fa-play-circle text-blue-600 dark:text-blue-400"></i> <span>Watch Demo</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-8 pt-4">
+                        <div><div class="text-3xl font-bold text-gray-900 dark:text-white">10K+</div><div class="text-sm text-gray-500 dark:text-gray-400">Active Learners</div></div>
+                        <div><div class="text-3xl font-bold text-gray-900 dark:text-white">500+</div><div class="text-sm text-gray-500 dark:text-gray-400">Expert Teachers</div></div>
+                        <div><div class="text-3xl font-bold text-gray-900 dark:text-white">95%</div><div class="text-sm text-gray-500 dark:text-gray-400">Satisfaction Rate</div></div>
+                    </div>
+                </div>
+                <div class="relative animate-float">
+                    <div class="relative z-10 bg-white/80 dark:bg-gray-800/80 glass rounded-3xl p-6 shadow-2xl">
+                        <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&h=400&fit=crop&crop=center" alt="Learning" class="rounded-2xl w-full h-80 object-cover" />
+                        <div class="absolute -bottom-6 -right-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-robot text-white text-xl"></i></div>
+                                <div><div class="font-semibold text-gray-900 dark:text-white">AI-Powered</div><div class="text-sm text-gray-500 dark:text-gray-400">Smart Learning</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="py-20 bg-gray-50 dark:bg-gray-900/50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-white">Powerful Features</h2>
+                <p class="text-xl text-gray-600 dark:text-gray-300 mt-4">Everything you need for a modern digital learning experience</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 card-hover shadow-lg">
+                    <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mb-6"><i class="fas fa-brain text-white text-2xl"></i></div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">AI-Powered Learning</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Intelligent recommendations, personalized learning paths, and AI-assisted assessments for better outcomes.</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 card-hover shadow-lg">
+                    <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mb-6"><i class="fas fa-chart-line text-white text-2xl"></i></div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Advanced Analytics</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Real-time performance tracking, detailed reports, and insights to monitor progress and identify areas for improvement.</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 card-hover shadow-lg">
+                    <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mb-6"><i class="fas fa-users text-white text-2xl"></i></div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Collaborative Learning</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Interactive discussions, group projects, and peer-to-peer learning to foster community and engagement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="py-20">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div><img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&h=400&fit=crop&crop=center" alt="About" class="rounded-3xl shadow-2xl" /></div>
+                <div><h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-6">Why Choose CastroEduConnect?</h2>
+                    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">We're building the future of education with cutting-edge technology and a commitment to making learning accessible, engaging, and effective for everyone.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start space-x-3"><i class="fas fa-check-circle text-blue-600 text-xl mt-1"></i><span class="text-gray-600 dark:text-gray-300">Modern, responsive design that works on all devices</span></li>
+                        <li class="flex items-start space-x-3"><i class="fas fa-check-circle text-blue-600 text-xl mt-1"></i><span class="text-gray-600 dark:text-gray-300">AI-powered assessments and personalized learning paths</span></li>
+                        <li class="flex items-start space-x-3"><i class="fas fa-check-circle text-blue-600 text-xl mt-1"></i><span class="text-gray-600 dark:text-gray-300">Real-time analytics and performance tracking</span></li>
+                        <li class="flex items-start space-x-3"><i class="fas fa-check-circle text-blue-600 text-xl mt-1"></i><span class="text-gray-600 dark:text-gray-300">Secure, scalable, and built for the future</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 gradient-bg">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold text-white mb-4">Ready to Transform Learning?</h2>
+            <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Join thousands of educators and students already using CastroEduConnect</p>
+            <button onclick="window.location.href='register.html'" class="bg-white text-blue-600 px-12 py-4 rounded-2xl font-bold text-lg hover:shadow-xl transition transform hover:scale-105">
+                Get Started Free <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                        <span class="text-xl font-bold">CastroEduConnect</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">Connecting Learners, Empowering Futures.</p>
+                </div>
+                <div><h4 class="font-semibold mb-4">Platform</h4><ul class="space-y-2 text-gray-400"><li><a href="#" class="hover:text-white transition">Features</a></li><li><a href="#" class="hover:text-white transition">Pricing</a></li><li><a href="#" class="hover:text-white transition">Support</a></li></ul></div>
+                <div><h4 class="font-semibold mb-4">Company</h4><ul class="space-y-2 text-gray-400"><li><a href="#" class="hover:text-white transition">About</a></li><li><a href="#" class="hover:text-white transition">Blog</a></li><li><a href="#" class="hover:text-white transition">Careers</a></li></ul></div>
+                <div><h4 class="font-semibold mb-4">Connect</h4><ul class="space-y-2 text-gray-400"><li><a href="#" class="hover:text-white transition"><i class="fab fa-twitter mr-2"></i>Twitter</a></li><li><a href="#" class="hover:text-white transition"><i class="fab fa-linkedin mr-2"></i>LinkedIn</a></li><li><a href="#" class="hover:text-white transition"><i class="fab fa-youtube mr-2"></i>YouTube</a></li></ul></div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">© 2026 CastroEduConnect. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
