@@ -778,6 +778,50 @@ CREATE POLICY "resources_bucket_owner_update" ON storage.objects
 CREATE POLICY "resources_bucket_owner_delete" ON storage.objects
     FOR DELETE USING (bucket_id = 'resources' AND auth.uid() = owner);
 
+-- Fan out a notification to relevant users when an announcement is published.
+-- This is what powers the notification bell in the UI — without this trigger the
+-- `notifications` table stays empty and the bell has nothing real to show.
+CREATE OR REPLACE FUNCTION notify_users_on_announcement()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.is_published THEN
+        INSERT INTO public.notifications (user_id, type, title, message, link)
+        SELECT id, 'announcement', NEW.title,
+               CASE WHEN length(NEW.content) > 120 THEN left(NEW.content, 117) || '...' ELSE NEW.content END,
+               'announcements.html'
+        FROM public.profiles
+        WHERE is_active IS DISTINCT FROM false
+          AND (NEW.target_role = 'all' OR role = NEW.target_role)
+          AND id != NEW.author_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_notify_on_announcement
+AFTER INSERT ON public.announcements
+FOR EACH ROW EXECUTE FUNCTION notify_users_on_announcement();
+
+-- Notify a learner when their essay/short-answer submission gets graded.
+CREATE OR REPLACE FUNCTION notify_on_submission_graded()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status = 'graded' AND (OLD.status IS DISTINCT FROM 'graded') THEN
+        INSERT INTO public.notifications (user_id, type, title, message, link)
+        VALUES (
+            NEW.learner_id, 'grade', 'Your submission was graded',
+            'You scored ' || COALESCE(NEW.percentage::text, '?') || '% — tap to view feedback.',
+            'results.html'
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_notify_on_submission_graded
+AFTER UPDATE ON public.submissions
+FOR EACH ROW EXECUTE FUNCTION notify_on_submission_graded();
+
 -- ============================================================
 -- SEED DATA
 -- ============================================================

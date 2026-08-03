@@ -251,11 +251,19 @@
                     <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 text-xl">
                         <i id="dark-mode-icon" class="fas fa-moon"></i>
                     </button>
-                    <button onclick="showToast('You have 3 new notifications', 'info')" 
-                            class="relative text-gray-600 dark:text-gray-300 hover:text-blue-600">
-                        <i class="fas fa-bell text-xl"></i>
-                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">3</span>
-                    </button>
+                    <div class="relative" id="notif-wrapper">
+                        <button onclick="toggleNotifDropdown()" class="relative text-gray-600 dark:text-gray-300 hover:text-blue-600">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">0</span>
+                        </button>
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+                            <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <span class="font-semibold text-gray-900 dark:text-white text-sm">Notifications</span>
+                                <button onclick="markAllNotifsRead()" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Mark all read</button>
+                            </div>
+                            <div id="notif-list" class="divide-y divide-gray-100 dark:divide-gray-700"><p class="p-4 text-sm text-gray-400">Loading...</p></div>
+                        </div>
+                    </div>
                     <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='profile.html'">
                         <div id="user-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">
                             <i class="fas fa-user"></i>
@@ -480,6 +488,7 @@
                 }
                 
                 currentUser = session.user;
+                refreshNotifBadge();
                 console.log('✅ User authenticated:', currentUser.email);
                 
                 await fetchUserProfile();
@@ -1273,6 +1282,69 @@
             
             console.log('✅ Subjects page initialized successfully');
         })();
-    </script>
+    
+        // ============================================
+        // NOTIFICATIONS (shared across pages)
+        // ============================================
+        let notifDropdownOpen = false;
+        function toggleNotifDropdown() {
+            notifDropdownOpen = !notifDropdownOpen;
+            const dd = document.getElementById('notif-dropdown');
+            if (dd) dd.classList.toggle('hidden', !notifDropdownOpen);
+            if (notifDropdownOpen) loadNotifications();
+        }
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('notif-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('notif-dropdown')?.classList.add('hidden');
+                notifDropdownOpen = false;
+            }
+        });
+        function escNotif(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+        function notifTimeAgo(dateStr) {
+            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return `${Math.floor(diff/86400)}d ago`;
+        }
+        async function refreshNotifBadge() {
+            try {
+                const { count } = await supabaseClient.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
+                const badge = document.getElementById('notif-badge');
+                if (!badge) return;
+                if (count && count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.remove('hidden'); }
+                else { badge.classList.add('hidden'); }
+            } catch (e) { console.error('notif badge error', e); }
+        }
+        async function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            if (!list) return;
+            try {
+                const { data, error } = await supabaseClient.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(15);
+                if (error) throw error;
+                if (!data || !data.length) { list.innerHTML = '<p class="p-4 text-sm text-gray-400">No notifications yet.</p>'; return; }
+                list.innerHTML = data.map(n => `
+                    <a href="${n.link || '#'}" onclick="markNotifRead('${n.id}')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${!n.is_read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">${escNotif(n.title)}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${escNotif(n.message)}</p>
+                        <p class="text-xs text-gray-400 mt-1">${notifTimeAgo(n.created_at)}</p>
+                    </a>`).join('');
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p class="p-4 text-sm text-red-500">Could not load notifications.</p>';
+            }
+        }
+        async function markNotifRead(id) {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
+            refreshNotifBadge();
+        }
+        async function markAllNotifsRead() {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('user_id', currentUser.id).eq('is_read', false);
+            await loadNotifications();
+            refreshNotifBadge();
+        }
+
+</script>
 </body>
 </html>

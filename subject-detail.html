@@ -53,6 +53,19 @@
                 <div class="flex-1 max-w-xl mx-4"></div>
                 <div class="flex items-center space-x-4">
                     <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="relative" id="notif-wrapper">
+                        <button onclick="toggleNotifDropdown()" class="relative text-gray-600 dark:text-gray-300 hover:text-blue-600">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">0</span>
+                        </button>
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+                            <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <span class="font-semibold text-gray-900 dark:text-white text-sm">Notifications</span>
+                                <button onclick="markAllNotifsRead()" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Mark all read</button>
+                            </div>
+                            <div id="notif-list" class="divide-y divide-gray-100 dark:divide-gray-700"><p class="p-4 text-sm text-gray-400">Loading...</p></div>
+                        </div>
+                    </div>
                     <div class="flex items-center space-x-3">
                         <div id="header-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">--</div>
                         <div class="hidden sm:block">
@@ -94,7 +107,17 @@
             <!-- Manage bar (teacher/admin only) -->
             <div id="manage-bar" class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 mb-6 flex items-center justify-between flex-wrap gap-3">
                 <p class="text-sm text-blue-700 dark:text-blue-300"><i class="fas fa-tools mr-2"></i>You manage this subject's content.</p>
-                <button onclick="openTopicModal()" class="btn-primary px-5 py-2 rounded-xl text-white font-semibold text-sm"><i class="fas fa-plus mr-2"></i>Add Topic</button>
+                <div class="flex gap-2 flex-wrap">
+                    <button onclick="openTopicModal()" class="btn-primary px-5 py-2 rounded-xl text-white font-semibold text-sm"><i class="fas fa-plus mr-2"></i>Add Topic</button>
+                    <button id="create-assignment-link" class="px-5 py-2 rounded-xl border-2 border-blue-600 text-blue-600 dark:text-blue-400 font-semibold text-sm"><i class="fas fa-tasks mr-2"></i>New Assignment</button>
+                    <button id="create-assessment-link" class="px-5 py-2 rounded-xl border-2 border-purple-600 text-purple-600 dark:text-purple-400 font-semibold text-sm"><i class="fas fa-question-circle mr-2"></i>New Quiz/Exam</button>
+                </div>
+            </div>
+
+            <!-- Activities: this subject's assignments & assessments -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><i class="fas fa-clipboard-list mr-2 text-blue-600"></i>Assignments &amp; Assessments</h3>
+                <div id="activities-list" class="space-y-2"><p class="text-sm text-gray-400">Loading...</p></div>
             </div>
 
             <!-- Topics accordion -->
@@ -227,6 +250,7 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = 'login.html'; return null; }
             currentUser = session.user;
+                refreshNotifBadge();
             const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
             if (error) { showToast('Could not load your profile', 'error'); return null; }
             userProfile = data;
@@ -264,12 +288,44 @@
             const teacherName = subject.profiles ? `${subject.profiles.first_name} ${subject.profiles.last_name}` : 'Unassigned';
             document.getElementById('subject-teacher').innerHTML = `<i class="fas fa-chalkboard-teacher mr-1"></i>${escapeHtml(teacherName)}`;
 
+            document.getElementById('link-assignments').href = `assignments.html?subject=${subjectId}`;
+            document.getElementById('link-assessments').href = `assessments.html?subject=${subjectId}`;
+
             if (canManage) {
                 document.getElementById('manage-bar').classList.remove('hidden');
                 document.getElementById('general-upload-btn').classList.remove('hidden');
+                document.getElementById('create-assignment-link').onclick = () => window.location.href = `assignments.html?subject=${subjectId}&action=create`;
+                document.getElementById('create-assessment-link').onclick = () => window.location.href = `assessments.html?subject=${subjectId}&action=create`;
             }
             document.getElementById('course-content').classList.remove('hidden');
             return true;
+        }
+
+        const typeBadge = { assignment: 'bg-blue-100 text-blue-600', quiz: 'bg-purple-100 text-purple-600', cat: 'bg-orange-100 text-orange-600', exam: 'bg-red-100 text-red-600' };
+        const typeLabel = { assignment: 'Assignment', quiz: 'Quiz', cat: 'CAT', exam: 'Exam' };
+        const typePage = { assignment: 'assignments.html', quiz: 'assessments.html', cat: 'assessments.html', exam: 'assessments.html' };
+
+        async function loadActivities() {
+            const el = document.getElementById('activities-list');
+            try {
+                let query = supabaseClient.from('assessments').select('*').eq('subject_id', subjectId).order('created_at', { ascending: false });
+                if (!canManage) query = query.in('status', ['published', 'active']);
+                const { data, error } = await query;
+                if (error) throw error;
+                if (!data || !data.length) { el.innerHTML = '<p class="text-sm text-gray-400">No assignments or assessments yet.</p>'; return; }
+                el.innerHTML = data.map(a => `
+                    <a href="${typePage[a.assessment_type] || 'assignments.html'}?subject=${subjectId}" class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900 transition">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs px-2 py-1 rounded-full font-semibold ${typeBadge[a.assessment_type] || 'bg-gray-100 text-gray-600'}">${typeLabel[a.assessment_type] || a.assessment_type}</span>
+                            <span class="font-medium text-gray-900 dark:text-white">${escapeHtml(a.title)}</span>
+                            ${a.status === 'draft' ? '<span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">Draft</span>' : ''}
+                        </div>
+                        <span class="text-xs text-gray-400">${a.closing_date ? 'Due ' + new Date(a.closing_date).toLocaleDateString() : ''}</span>
+                    </a>`).join('');
+            } catch (e) {
+                console.error(e);
+                el.innerHTML = '<p class="text-sm text-red-500">Could not load activities.</p>';
+            }
         }
 
         async function loadTopics() {
@@ -530,7 +586,71 @@
             const ok = await loadSubject();
             if (!ok) return;
             await loadTopics();
+            await loadActivities();
         })();
-    </script>
+    
+        // ============================================
+        // NOTIFICATIONS (shared across pages)
+        // ============================================
+        let notifDropdownOpen = false;
+        function toggleNotifDropdown() {
+            notifDropdownOpen = !notifDropdownOpen;
+            const dd = document.getElementById('notif-dropdown');
+            if (dd) dd.classList.toggle('hidden', !notifDropdownOpen);
+            if (notifDropdownOpen) loadNotifications();
+        }
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('notif-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('notif-dropdown')?.classList.add('hidden');
+                notifDropdownOpen = false;
+            }
+        });
+        function escNotif(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+        function notifTimeAgo(dateStr) {
+            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return `${Math.floor(diff/86400)}d ago`;
+        }
+        async function refreshNotifBadge() {
+            try {
+                const { count } = await supabaseClient.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
+                const badge = document.getElementById('notif-badge');
+                if (!badge) return;
+                if (count && count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.remove('hidden'); }
+                else { badge.classList.add('hidden'); }
+            } catch (e) { console.error('notif badge error', e); }
+        }
+        async function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            if (!list) return;
+            try {
+                const { data, error } = await supabaseClient.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(15);
+                if (error) throw error;
+                if (!data || !data.length) { list.innerHTML = '<p class="p-4 text-sm text-gray-400">No notifications yet.</p>'; return; }
+                list.innerHTML = data.map(n => `
+                    <a href="${n.link || '#'}" onclick="markNotifRead('${n.id}')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${!n.is_read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">${escNotif(n.title)}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${escNotif(n.message)}</p>
+                        <p class="text-xs text-gray-400 mt-1">${notifTimeAgo(n.created_at)}</p>
+                    </a>`).join('');
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p class="p-4 text-sm text-red-500">Could not load notifications.</p>';
+            }
+        }
+        async function markNotifRead(id) {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
+            refreshNotifBadge();
+        }
+        async function markAllNotifsRead() {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('user_id', currentUser.id).eq('is_read', false);
+            await loadNotifications();
+            refreshNotifBadge();
+        }
+
+</script>
 </body>
 </html>

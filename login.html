@@ -3,445 +3,504 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - CastroEduConnect</title>
+    <title>Discussions - CastroEduConnect</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
-    
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <style>
-        .input-error {
-            border-color: #EF4444 !important;
-        }
-        .input-error:focus {
-            border-color: #EF4444 !important;
-            ring-color: #EF4444 !important;
-        }
-        
-        .error-message {
-            color: #EF4444;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
-        .error-message.show {
-            display: block;
-        }
-        
-        .spinner {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .login-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-        }
-        .dark .login-card {
-            background: rgba(17, 24, 39, 0.9);
-        }
-        
-        .toast-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .toast {
-            padding: 1rem 1.5rem;
-            border-radius: 0.75rem;
-            color: white;
-            animation: slideInRight 0.5s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            min-width: 300px;
-            max-width: 450px;
-        }
-        .toast-success { background: #10B981; }
-        .toast-error { background: #EF4444; }
-        .toast-warning { background: #F59E0B; }
-        .toast-info { background: #3B82F6; }
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
-    <div class="w-full max-w-md">
-        <div class="login-card rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
-            <!-- Logo & Header -->
-            <div class="text-center mb-8">
-                <div class="flex justify-center mb-4">
-                    <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-graduation-cap text-white text-3xl"></i>
-                    </div>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back!</h2>
-                <p class="text-gray-600 dark:text-gray-400 mt-2">Login to your CastroEduConnect account</p>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
+        <div class="p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center"><i class="fas fa-graduation-cap text-white text-xl"></i></div>
+                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
             </div>
-            
-            <!-- Login Form -->
-            <form id="login-form" class="space-y-6">
-                <!-- Email -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <i class="fas fa-envelope text-blue-600 dark:text-blue-400 mr-1"></i> Email Address
-                    </label>
-                    <div class="relative">
-                        <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="email" id="email" required placeholder="you@example.com" 
-                               class="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition" />
-                    </div>
-                    <div class="error-message" id="email-error">Please enter your email address</div>
-                </div>
-                
-                <!-- Password -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <i class="fas fa-lock text-blue-600 dark:text-blue-400 mr-1"></i> Password
-                    </label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="password" id="password" required placeholder="••••••••" 
-                               class="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition" />
-                        <button type="button" onclick="togglePassword()" 
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
-                            <i id="password-toggle-icon" class="fas fa-eye"></i>
+            <nav class="space-y-1">
+                <a href="dashboard.html" class="sidebar-link"><i class="fas fa-th-large w-5"></i> Dashboard</a>
+                <a href="subjects.html" class="sidebar-link"><i class="fas fa-book w-5"></i> Subjects</a>
+                <a href="assignments.html" class="sidebar-link"><i class="fas fa-tasks w-5"></i> Assignments</a>
+                <a href="assessments.html" class="sidebar-link"><i class="fas fa-question-circle w-5"></i> Assessments</a>
+                <a href="results.html" class="sidebar-link"><i class="fas fa-chart-bar w-5"></i> Results</a>
+                <a href="resources.html" class="sidebar-link"><i class="fas fa-folder w-5"></i> Resources</a>
+                <a href="announcements.html" class="sidebar-link"><i class="fas fa-bullhorn w-5"></i> Announcements</a>
+                <a href="discussions.html" class="sidebar-link active"><i class="fas fa-comments w-5"></i> Discussions</a>
+                <a href="admin.html" class="sidebar-link"><i class="fas fa-user-shield w-5"></i> Admin Console</a>
+                <a href="profile.html" class="sidebar-link"><i class="fas fa-user w-5"></i> Profile</a>
+                <a href="settings.html" class="sidebar-link"><i class="fas fa-cog w-5"></i> Settings</a>
+                <a href="#" onclick="logoutUser(); return false;" class="sidebar-link text-red-500 hover:text-red-600"><i class="fas fa-sign-out-alt w-5"></i> Logout</a>
+            </nav>
+        </div>
+    </aside>
+
+    <main class="md:ml-64 min-h-screen">
+        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl"><i class="fas fa-bars"></i></button>
+                <div class="flex-1 max-w-xl mx-4"></div>
+                <div class="flex items-center space-x-4">
+                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="relative" id="notif-wrapper">
+                        <button onclick="toggleNotifDropdown()" class="relative text-gray-600 dark:text-gray-300 hover:text-blue-600">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">0</span>
                         </button>
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+                            <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <span class="font-semibold text-gray-900 dark:text-white text-sm">Notifications</span>
+                                <button onclick="markAllNotifsRead()" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Mark all read</button>
+                            </div>
+                            <div id="notif-list" class="divide-y divide-gray-100 dark:divide-gray-700"><p class="p-4 text-sm text-gray-400">Loading...</p></div>
+                        </div>
                     </div>
-                    <div class="error-message" id="password-error">Please enter your password</div>
-                </div>
-                
-                <!-- Remember Me & Forgot Password -->
-                <div class="flex items-center justify-between">
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="remember-me" 
-                               class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500" />
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
-                    </label>
-                    <a href="forgot-password.html" class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition">
-                        Forgot password?
-                    </a>
-                </div>
-                
-                <!-- Login Button -->
-                <button type="submit" id="login-btn" 
-                        class="w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>Login</span>
-                </button>
-            </form>
-            
-            <!-- Register Link -->
-            <div class="mt-6 text-center">
-                <p class="text-gray-600 dark:text-gray-400">
-                    Don't have an account? 
-                    <a href="register.html" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition">
-                        Sign up
-                    </a>
-                </p>
-            </div>
-            
-            <!-- Divider -->
-            <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                </div>
-                <div class="relative flex justify-center text-sm">
-                    <span class="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">or continue with</span>
+                    <div class="flex items-center space-x-3">
+                        <div id="header-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">--</div>
+                        <div class="hidden sm:block">
+                            <div id="header-name" class="text-sm font-semibold text-gray-900 dark:text-white">Loading...</div>
+                            <div id="header-role" class="text-xs text-gray-500 dark:text-gray-400 capitalize">--</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Social Login -->
-            <div class="flex justify-center space-x-4">
-                <button type="button" onclick="socialLogin('google')" 
-                        class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition transform hover:scale-105">
-                    <i class="fab fa-google text-red-500 text-xl"></i>
-                </button>
-                <button type="button" onclick="socialLogin('facebook')" 
-                        class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition transform hover:scale-105">
-                    <i class="fab fa-facebook text-blue-600 text-xl"></i>
-                </button>
-                <button type="button" onclick="socialLogin('github')" 
-                        class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition transform hover:scale-105">
-                    <i class="fab fa-github text-gray-900 dark:text-white text-xl"></i>
-                </button>
+        </header>
+
+        <!-- LIST VIEW -->
+        <div id="list-view" class="p-6">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Discussions</h1>
+                <div class="flex items-center gap-3">
+                    <select id="subject-filter" class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                        <option value="">All my subjects</option>
+                    </select>
+                    <button onclick="openNewDiscussionModal()" class="btn-primary px-6 py-2 rounded-xl text-white font-semibold"><i class="fas fa-plus mr-2"></i>New Discussion</button>
+                </div>
+            </div>
+
+            <div id="discussions-list" class="space-y-4">
+                <div class="skeleton rounded-2xl h-24"></div>
+                <div class="skeleton rounded-2xl h-24"></div>
+            </div>
+            <div id="list-empty" class="hidden text-center py-16">
+                <i class="fas fa-comments text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400">No discussions yet. Start one!</p>
             </div>
         </div>
-        
-        <!-- Footer -->
-        <p class="text-center text-gray-500 dark:text-gray-400 text-sm mt-6">
-            © 2026 CastroEduConnect. All rights reserved.
-        </p>
+
+        <!-- THREAD VIEW -->
+        <div id="thread-view" class="p-6 hidden">
+            <button onclick="backToList()" class="text-blue-600 dark:text-blue-400 mb-4 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back to Discussions</button>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm mb-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span id="thread-pinned" class="hidden px-3 py-1 bg-gray-800 text-white text-xs font-semibold rounded-full"><i class="fas fa-thumbtack mr-1"></i>Pinned</span>
+                            <span id="thread-subject" class="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-full"></span>
+                        </div>
+                        <h2 id="thread-title" class="text-xl font-bold text-gray-900 dark:text-white"></h2>
+                        <p id="thread-meta" class="text-sm text-gray-500 dark:text-gray-400 mt-1"></p>
+                    </div>
+                    <div id="thread-mod-actions" class="hidden flex gap-2">
+                        <button onclick="togglePin()" title="Pin/unpin" class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"><i class="fas fa-thumbtack"></i></button>
+                        <button onclick="toggleClose()" title="Close/reopen" class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"><i class="fas fa-lock"></i></button>
+                    </div>
+                </div>
+                <p id="thread-content" class="text-gray-700 dark:text-gray-300 mt-4 whitespace-pre-line"></p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4"><i class="fas fa-comment-dots mr-2"></i>Replies</h3>
+                <div id="comments-list" class="space-y-4 mb-6"></div>
+                <div id="reply-box" class="flex gap-3">
+                    <textarea id="reply-input" rows="2" placeholder="Write a reply..." class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"></textarea>
+                    <button onclick="postReply()" class="btn-primary px-6 rounded-xl text-white font-semibold self-end h-12"><i class="fas fa-paper-plane"></i></button>
+                </div>
+                <p id="closed-notice" class="hidden text-sm text-gray-500 dark:text-gray-400 italic">This discussion is closed for new replies.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Discussion Modal -->
+    <div id="new-discussion-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Start a Discussion</h3>
+                <button onclick="closeNewDiscussionModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Subject</label>
+                    <select id="new-disc-subject" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                    <input id="new-disc-title" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">What's on your mind?</label>
+                    <textarea id="new-disc-content" rows="4" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"></textarea>
+                </div>
+                <button onclick="submitNewDiscussion()" class="w-full btn-primary py-3 rounded-xl text-white font-semibold"><i class="fas fa-paper-plane mr-2"></i>Post Discussion</button>
+            </div>
+        </div>
     </div>
-    
-    <!-- Toast Container -->
+
     <div id="toast-container" class="toast-container"></div>
-    
+
     <script>
-        // ============================================
-        // SUPABASE CONFIGURATION
-        // ============================================
         const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
-        
-        // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase client initialized');
 
-        // ============================================
-        // TOGGLE PASSWORD VISIBILITY
-        // ============================================
-        function togglePassword() {
-            const input = document.getElementById('password');
-            const icon = document.getElementById('password-toggle-icon');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'fas fa-eye-slash';
-            } else {
-                input.type = 'password';
-                icon.className = 'fas fa-eye';
-            }
-        }
+        let currentUser = null;
+        let userProfile = null;
+        let mySubjects = [];
+        let currentDiscussion = null;
 
-        // ============================================
-        // SHOW TOAST MESSAGES
-        // ============================================
         function showToast(message, type = 'info', duration = 3000) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            toast.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : ''}
-                        ${type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : ''}
-                        ${type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
-                        ${type === 'info' ? '<i class="fas fa-info-circle"></i>' : ''}
-                        <span>${message}</span>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-white/80 hover:text-white">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
+            toast.innerHTML = `<div class="flex items-center justify-between"><span>${message}</span><button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/80 hover:text-white"><i class="fas fa-times"></i></button></div>`;
             container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                toast.style.transition = 'all 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; toast.style.transition = 'all 0.3s ease'; setTimeout(() => toast.remove(), 300); }, duration);
+        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        async function logoutUser() { await supabaseClient.auth.signOut(); window.location.href = 'login.html'; }
+        function initials(first, last) { return `${(first || '?')[0] || ''}${(last || '')[0] || ''}`.toUpperCase() || '?'; }
+        function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+        function timeAgo(dateStr) {
+            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return `${Math.floor(diff/86400)}d ago`;
         }
 
-        // ============================================
-        // CHECK IF USER IS ALREADY LOGGED IN
-        // ============================================
-        async function checkExistingSession() {
+        async function checkAuth() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return null; }
+            currentUser = session.user;
+                refreshNotifBadge();
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (error) { showToast('Could not load your profile', 'error'); return null; }
+            userProfile = data;
+            document.getElementById('header-name').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email;
+            document.getElementById('header-role').textContent = data.role;
+            document.getElementById('header-avatar').textContent = initials(data.first_name, data.last_name);
+            return data;
+        }
+
+        function isModerator() {
+            return userProfile && (userProfile.role === 'admin' || userProfile.role === 'teacher');
+        }
+
+        async function loadMySubjects() {
             try {
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
-                
-                if (error) {
-                    console.error('Session check error:', error);
-                    return false;
+                let subjects = [];
+                if (userProfile.role === 'teacher') {
+                    const { data } = await supabaseClient.from('subjects').select('id, name, color').eq('teacher_id', currentUser.id);
+                    subjects = data || [];
+                } else if (userProfile.role === 'admin') {
+                    const { data } = await supabaseClient.from('subjects').select('id, name, color');
+                    subjects = data || [];
+                } else {
+                    const { data } = await supabaseClient
+                        .from('subject_enrollments')
+                        .select('subjects(id, name, color)')
+                        .eq('learner_id', currentUser.id)
+                        .eq('status', 'active');
+                    subjects = (data || []).map(e => e.subjects).filter(Boolean);
                 }
-                
-                if (session) {
-                    console.log('✅ User already logged in:', session.user.email);
-                    return true;
-                }
-                
-                return false;
-            } catch (error) {
-                console.error('Session check error:', error);
-                return false;
+                mySubjects = subjects;
+                const filterSel = document.getElementById('subject-filter');
+                const newSel = document.getElementById('new-disc-subject');
+                filterSel.innerHTML = '<option value="">All my subjects</option>' + subjects.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+                newSel.innerHTML = subjects.length
+                    ? subjects.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')
+                    : '<option value="">Enroll in a subject first</option>';
+            } catch (e) {
+                console.error(e);
             }
         }
 
-        // ============================================
-        // SOCIAL LOGIN
-        // ============================================
-        async function socialLogin(provider) {
+        async function loadDiscussions() {
+            const subjectId = document.getElementById('subject-filter').value;
+            const list = document.getElementById('discussions-list');
+            const empty = document.getElementById('list-empty');
+            list.innerHTML = '<div class="skeleton rounded-2xl h-24"></div><div class="skeleton rounded-2xl h-24"></div>';
+            empty.classList.add('hidden');
             try {
-                showToast(`Redirecting to ${provider}...`, 'info');
-                
-                const { data, error } = await supabaseClient.auth.signInWithOAuth({
-                    provider: provider,
-                    options: {
-                        redirectTo: `${window.location.origin}/dashboard.html`
-                    }
-                });
-                
+                const subjectIds = subjectId ? [subjectId] : mySubjects.map(s => s.id);
+                if (!subjectIds.length) {
+                    list.innerHTML = '';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                const { data, error } = await supabaseClient
+                    .from('discussions')
+                    .select('*, subjects(name, color), profiles:author_id(first_name, last_name), discussion_comments(count)')
+                    .in('subject_id', subjectIds)
+                    .order('is_pinned', { ascending: false })
+                    .order('created_at', { ascending: false });
                 if (error) throw error;
-                
-            } catch (error) {
-                console.error('Social login error:', error);
-                showToast(`Failed to login with ${provider}: ${error.message}`, 'error');
+                if (!data || !data.length) {
+                    list.innerHTML = '';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                list.innerHTML = data.map(d => {
+                    const authorName = d.profiles ? `${d.profiles.first_name || ''} ${d.profiles.last_name || ''}`.trim() : 'Unknown';
+                    const replyCount = d.discussion_comments?.[0]?.count ?? 0;
+                    return `
+                    <div onclick="openThread('${d.id}')" class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm cursor-pointer hover:shadow-md transition">
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                            ${d.is_pinned ? '<span class="px-2 py-0.5 bg-gray-800 text-white text-xs font-semibold rounded-full"><i class="fas fa-thumbtack mr-1"></i>Pinned</span>' : ''}
+                            ${d.is_closed ? '<span class="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-semibold rounded-full">Closed</span>' : ''}
+                            <span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-full">${escapeHtml(d.subjects?.name || '')}</span>
+                        </div>
+                        <h3 class="font-bold text-gray-900 dark:text-white">${escapeHtml(d.title)}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">by ${escapeHtml(authorName)} &middot; ${timeAgo(d.created_at)} &middot; <i class="fas fa-comment mr-1"></i>${replyCount} replies</p>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+                showToast('Could not load discussions', 'error');
             }
         }
+        document.getElementById('subject-filter').addEventListener('change', loadDiscussions);
 
-        // ============================================
-        // HANDLE LOGIN
-        // ============================================
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Get values
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const rememberMe = document.getElementById('remember-me').checked;
-            
-            // Reset errors
-            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
-            document.querySelectorAll('.error-message.show').forEach(el => el.classList.remove('show'));
-            
-            // Validate Email
-            if (!email) {
-                document.getElementById('email').classList.add('input-error');
-                document.getElementById('email-error').classList.add('show');
-                showToast('Please enter your email address', 'error');
-                return;
-            }
-            
-            // Validate Password
-            if (!password) {
-                document.getElementById('password').classList.add('input-error');
-                document.getElementById('password-error').classList.add('show');
-                showToast('Please enter your password', 'error');
-                return;
-            }
-            
-            // Show loading state
-            const btn = document.getElementById('login-btn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner spinner"></i> Logging in...';
-            
+        function openNewDiscussionModal() {
+            if (!mySubjects.length) { showToast('Enroll in a subject first', 'warning'); return; }
+            document.getElementById('new-discussion-modal').classList.add('active');
+        }
+        function closeNewDiscussionModal() {
+            document.getElementById('new-discussion-modal').classList.remove('active');
+            document.getElementById('new-disc-title').value = '';
+            document.getElementById('new-disc-content').value = '';
+        }
+        async function submitNewDiscussion() {
+            const subjectId = document.getElementById('new-disc-subject').value;
+            const title = document.getElementById('new-disc-title').value.trim();
+            const content = document.getElementById('new-disc-content').value.trim();
+            if (!subjectId || !title) { showToast('Please choose a subject and title', 'error'); return; }
             try {
-                // ============================================
-                // SUPABASE LOGIN
-                // ============================================
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                
-                if (error) {
-                    throw new Error(error.message);
-                }
-                
-                console.log('✅ Login successful:', data.user.email);
-                
-                // Store session in localStorage if remember me is checked
-                if (rememberMe) {
-                    localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
-                }
-                
-                // Show success message
-                showToast('Welcome back! 🎉 Redirecting...', 'success');
-                
-                // Update button
-                btn.innerHTML = '<i class="fas fa-check-circle"></i> Logged In!';
-                btn.className = 'w-full bg-green-500 py-3 rounded-xl text-white font-semibold text-lg';
-                
-                // Redirect to dashboard
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
-                
-            } catch (error) {
-                console.error('❌ Login error:', error);
-                
-                // Handle specific error cases
-                let errorMessage = error.message;
-                if (error.message.includes('Invalid login credentials')) {
-                    errorMessage = 'Invalid email or password. Please try again.';
-                } else if (error.message.includes('Email not confirmed')) {
-                    errorMessage = 'Please verify your email address before logging in.';
-                } else if (error.message.includes('Too many requests')) {
-                    errorMessage = 'Too many login attempts. Please wait a moment.';
-                }
-                
-                showToast(errorMessage, 'error');
-                
-                // Reset button
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-                btn.className = 'w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg flex items-center justify-center space-x-2';
+                const { error } = await supabaseClient.from('discussions').insert([{
+                    subject_id: subjectId, author_id: currentUser.id, title, content
+                }]);
+                if (error) throw error;
+                showToast('Discussion posted!', 'success');
+                closeNewDiscussionModal();
+                await loadDiscussions();
+            } catch (e) {
+                showToast('Could not post: ' + e.message, 'error');
             }
-        });
-
-        // ============================================
-        // REMOVE ERROR STATES ON INPUT
-        // ============================================
-        document.getElementById('email').addEventListener('input', function() {
-            this.classList.remove('input-error');
-            document.getElementById('email-error').classList.remove('show');
-        });
-        
-        document.getElementById('password').addEventListener('input', function() {
-            this.classList.remove('input-error');
-            document.getElementById('password-error').classList.remove('show');
-        });
-
-        // ============================================
-        // KEYBOARD SHORTCUTS
-        // ============================================
-        document.addEventListener('keydown', function(e) {
-            // Ctrl+Enter to submit form
-            if (e.ctrlKey && e.key === 'Enter') {
-                document.getElementById('login-form').dispatchEvent(new Event('submit'));
-            }
-        });
-
-        // ============================================
-        // DEMO CREDENTIALS (for testing)
-        // ============================================
-        function fillDemoCredentials() {
-            document.getElementById('email').value = 'demo@castroeduconnect.com';
-            document.getElementById('password').value = 'Demo123!@#';
-            showToast('Demo credentials filled! Click Login', 'info');
         }
 
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        (async function init() {
-            console.log('🚀 CastroEduConnect Login Page Loading...');
-            console.log('📧 Supabase URL:', SUPABASE_URL);
-            console.log('🔑 Supabase Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
-            
-            // Check if user is already logged in
-            const hasSession = await checkExistingSession();
-            
-            if (hasSession) {
-                console.log('👤 Active session found, redirecting to dashboard...');
-                showToast('You are already logged in! Redirecting...', 'info');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1000);
-                return;
+        async function openThread(id) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('discussions')
+                    .select('*, subjects(name), profiles:author_id(first_name, last_name)')
+                    .eq('id', id).single();
+                if (error) throw error;
+                currentDiscussion = data;
+                document.getElementById('list-view').classList.add('hidden');
+                document.getElementById('thread-view').classList.remove('hidden');
+                renderThreadHeader();
+                await loadComments();
+            } catch (e) {
+                showToast('Could not open discussion', 'error');
             }
-            
-            console.log('👤 No active session, showing login form');
-            
-            // Add demo fill option (double-click on logo)
-            document.querySelector('.gradient-bg').addEventListener('dblclick', fillDemoCredentials);
-            console.log('💡 Double-click the logo to fill demo credentials');
-            
-            console.log('✅ Login page initialized successfully');
+        }
+        function backToList() {
+            document.getElementById('thread-view').classList.add('hidden');
+            document.getElementById('list-view').classList.remove('hidden');
+            currentDiscussion = null;
+        }
+
+        function renderThreadHeader() {
+            const d = currentDiscussion;
+            const authorName = d.profiles ? `${d.profiles.first_name || ''} ${d.profiles.last_name || ''}`.trim() : 'Unknown';
+            document.getElementById('thread-pinned').classList.toggle('hidden', !d.is_pinned);
+            document.getElementById('thread-subject').textContent = d.subjects?.name || '';
+            document.getElementById('thread-title').textContent = d.title;
+            document.getElementById('thread-meta').textContent = `by ${authorName} · ${timeAgo(d.created_at)}`;
+            document.getElementById('thread-content').textContent = d.content || '';
+            const canModerate = isModerator() || d.author_id === currentUser.id;
+            document.getElementById('thread-mod-actions').classList.toggle('hidden', !canModerate);
+            document.getElementById('reply-box').classList.toggle('hidden', !!d.is_closed);
+            document.getElementById('closed-notice').classList.toggle('hidden', !d.is_closed);
+        }
+
+        async function togglePin() {
+            const { error } = await supabaseClient.from('discussions').update({ is_pinned: !currentDiscussion.is_pinned }).eq('id', currentDiscussion.id);
+            if (error) { showToast('Could not update: ' + error.message, 'error'); return; }
+            currentDiscussion.is_pinned = !currentDiscussion.is_pinned;
+            renderThreadHeader();
+            showToast(currentDiscussion.is_pinned ? 'Pinned' : 'Unpinned', 'success');
+        }
+        async function toggleClose() {
+            const { error } = await supabaseClient.from('discussions').update({ is_closed: !currentDiscussion.is_closed }).eq('id', currentDiscussion.id);
+            if (error) { showToast('Could not update: ' + error.message, 'error'); return; }
+            currentDiscussion.is_closed = !currentDiscussion.is_closed;
+            renderThreadHeader();
+            showToast(currentDiscussion.is_closed ? 'Closed' : 'Reopened', 'success');
+        }
+
+        async function loadComments() {
+            const container = document.getElementById('comments-list');
+            container.innerHTML = '<div class="skeleton rounded-xl h-16"></div>';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('discussion_comments')
+                    .select('*, profiles:user_id(first_name, last_name, role)')
+                    .eq('discussion_id', currentDiscussion.id)
+                    .order('created_at', { ascending: true });
+                if (error) throw error;
+                if (!data || !data.length) {
+                    container.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">No replies yet — be the first!</p>';
+                    return;
+                }
+                const canMark = isModerator();
+                container.innerHTML = data.map(c => {
+                    const name = c.profiles ? `${c.profiles.first_name || ''} ${c.profiles.last_name || ''}`.trim() : 'Unknown';
+                    const roleTag = c.profiles?.role === 'teacher' ? '<span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full ml-2">Teacher</span>' : '';
+                    return `
+                    <div class="flex gap-3 p-4 rounded-xl ${c.is_best_answer ? 'bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700' : 'bg-gray-50 dark:bg-gray-900/50'}">
+                        <div class="w-9 h-9 rounded-full gradient-bg flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">${initials(c.profiles?.first_name, c.profiles?.last_name)}</div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between flex-wrap gap-1">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white">${escapeHtml(name)}${roleTag} ${c.is_best_answer ? '<span class="text-xs px-2 py-0.5 bg-green-600 text-white rounded-full ml-2"><i class="fas fa-check mr-1"></i>Best Answer</span>' : ''}</p>
+                                <span class="text-xs text-gray-400">${timeAgo(c.created_at)}</span>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-line">${escapeHtml(c.content)}</p>
+                            <div class="flex items-center gap-4 mt-2">
+                                <button onclick="upvote('${c.id}', ${c.upvotes || 0})" class="text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600"><i class="fas fa-arrow-up mr-1"></i>${c.upvotes || 0}</button>
+                                ${canMark && !c.is_best_answer ? `<button onclick="markBest('${c.id}')" class="text-xs text-gray-500 dark:text-gray-400 hover:text-green-600"><i class="fas fa-check-circle mr-1"></i>Mark as best</button>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<p class="text-red-500 text-sm">Could not load replies.</p>';
+            }
+        }
+
+        async function postReply() {
+            const content = document.getElementById('reply-input').value.trim();
+            if (!content) return;
+            try {
+                const { error } = await supabaseClient.from('discussion_comments').insert([{
+                    discussion_id: currentDiscussion.id, user_id: currentUser.id, content
+                }]);
+                if (error) throw error;
+                document.getElementById('reply-input').value = '';
+                await loadComments();
+            } catch (e) {
+                showToast('Could not reply: ' + e.message, 'error');
+            }
+        }
+        async function upvote(commentId, current) {
+            const { error } = await supabaseClient.from('discussion_comments').update({ upvotes: current + 1 }).eq('id', commentId);
+            if (!error) await loadComments();
+        }
+        async function markBest(commentId) {
+            try {
+                await supabaseClient.from('discussion_comments').update({ is_best_answer: false }).eq('discussion_id', currentDiscussion.id);
+                const { error } = await supabaseClient.from('discussion_comments').update({ is_best_answer: true }).eq('id', commentId);
+                if (error) throw error;
+                showToast('Marked as best answer', 'success');
+                await loadComments();
+            } catch (e) {
+                showToast('Could not mark: ' + e.message, 'error');
+            }
+        }
+
+        function initDarkMode() {
+            const saved = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = saved ? saved === 'true' : prefersDark;
+            if (isDark) { document.documentElement.classList.add('dark'); document.getElementById('dark-mode-icon').className = 'fas fa-sun'; }
+        }
+        document.getElementById('dark-mode-toggle')?.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+            document.getElementById('dark-mode-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        (async function init() {
+            initDarkMode();
+            const p = await checkAuth();
+            if (!p) return;
+            await loadMySubjects();
+            await loadDiscussions();
         })();
-    </script>
+    
+        // ============================================
+        // NOTIFICATIONS (shared across pages)
+        // ============================================
+        let notifDropdownOpen = false;
+        function toggleNotifDropdown() {
+            notifDropdownOpen = !notifDropdownOpen;
+            const dd = document.getElementById('notif-dropdown');
+            if (dd) dd.classList.toggle('hidden', !notifDropdownOpen);
+            if (notifDropdownOpen) loadNotifications();
+        }
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('notif-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('notif-dropdown')?.classList.add('hidden');
+                notifDropdownOpen = false;
+            }
+        });
+        function escNotif(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+        function notifTimeAgo(dateStr) {
+            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return `${Math.floor(diff/86400)}d ago`;
+        }
+        async function refreshNotifBadge() {
+            try {
+                const { count } = await supabaseClient.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
+                const badge = document.getElementById('notif-badge');
+                if (!badge) return;
+                if (count && count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.remove('hidden'); }
+                else { badge.classList.add('hidden'); }
+            } catch (e) { console.error('notif badge error', e); }
+        }
+        async function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            if (!list) return;
+            try {
+                const { data, error } = await supabaseClient.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(15);
+                if (error) throw error;
+                if (!data || !data.length) { list.innerHTML = '<p class="p-4 text-sm text-gray-400">No notifications yet.</p>'; return; }
+                list.innerHTML = data.map(n => `
+                    <a href="${n.link || '#'}" onclick="markNotifRead('${n.id}')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${!n.is_read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">${escNotif(n.title)}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${escNotif(n.message)}</p>
+                        <p class="text-xs text-gray-400 mt-1">${notifTimeAgo(n.created_at)}</p>
+                    </a>`).join('');
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p class="p-4 text-sm text-red-500">Could not load notifications.</p>';
+            }
+        }
+        async function markNotifRead(id) {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
+            refreshNotifBadge();
+        }
+        async function markAllNotifsRead() {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('user_id', currentUser.id).eq('is_read', false);
+            await loadNotifications();
+            refreshNotifBadge();
+        }
+
+</script>
 </body>
 </html>

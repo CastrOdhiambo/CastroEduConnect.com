@@ -1,213 +1,447 @@
-# CastroEduConnect 🚀
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - CastroEduConnect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        .input-error {
+            border-color: #EF4444 !important;
+        }
+        .input-error:focus {
+            border-color: #EF4444 !important;
+            ring-color: #EF4444 !important;
+        }
+        
+        .error-message {
+            color: #EF4444;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+        .dark .login-card {
+            background: rgba(17, 24, 39, 0.9);
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            color: white;
+            animation: slideInRight 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 300px;
+            max-width: 450px;
+        }
+        .toast-success { background: #10B981; }
+        .toast-error { background: #EF4444; }
+        .toast-warning { background: #F59E0B; }
+        .toast-info { background: #3B82F6; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
+    <div class="w-full max-w-md">
+        <div class="login-card rounded-3xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
+            <!-- Logo & Header -->
+            <div class="text-center mb-8">
+                <div class="flex justify-center mb-4">
+                    <div class="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-graduation-cap text-white text-3xl"></i>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back!</h2>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">Login to your CastroEduConnect account</p>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-6">
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-envelope text-blue-600 dark:text-blue-400 mr-1"></i> Email Address
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="email" id="email" required placeholder="you@example.com" 
+                               class="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition" />
+                    </div>
+                    <div class="error-message" id="email-error">Please enter your email address</div>
+                </div>
+                
+                <!-- Password -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <i class="fas fa-lock text-blue-600 dark:text-blue-400 mr-1"></i> Password
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" id="password" required placeholder="••••••••" 
+                               class="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition" />
+                        <button type="button" onclick="togglePassword()" 
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                            <i id="password-toggle-icon" class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="error-message" id="password-error">Please enter your password</div>
+                </div>
+                
+                <!-- Remember Me & Forgot Password -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="remember-me" 
+                               class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500" />
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
+                    </label>
+                    <a href="forgot-password.html" class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition">
+                        Forgot password?
+                    </a>
+                </div>
+                
+                <!-- Login Button -->
+                <button type="submit" id="login-btn" 
+                        class="w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Login</span>
+                </button>
+            </form>
+            
+            <!-- Register Link -->
+            <div class="mt-6 text-center">
+                <p class="text-gray-600 dark:text-gray-400">
+                    Don't have an account? 
+                    <a href="register.html" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition">
+                        Sign up
+                    </a>
+                </p>
+            </div>
+            
+            <!-- Divider -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">or continue with</span>
+                </div>
+            </div>
+            
+            <!-- Social Login -->
+            <div class="flex justify-center space-x-4">
+                <button type="button" onclick="socialLogin('google')" 
+                        class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition transform hover:scale-105">
+                    <i class="fab fa-google text-red-500 text-xl"></i>
+                </button>
+                <button type="button" onclick="socialLogin('facebook')" 
+                        class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition transform hover:scale-105">
+                    <i class="fab fa-facebook text-blue-600 text-xl"></i>
+                </button>
+                <button type="button" onclick="socialLogin('github')" 
+                        class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition transform hover:scale-105">
+                    <i class="fab fa-github text-gray-900 dark:text-white text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <p class="text-center text-gray-500 dark:text-gray-400 text-sm mt-6">
+            © 2026 CastroEduConnect. All rights reserved.
+        </p>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
+        
+        // Initialize Supabase client
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client initialized');
 
-**Connecting Learners, Empowering Futures.**
+        // ============================================
+        // TOGGLE PASSWORD VISIBILITY
+        // ============================================
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('password-toggle-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
 
-A Learning Management System built with HTML5, Tailwind CSS, vanilla JavaScript, and Supabase
-(PostgreSQL + Auth). This package is your uploaded project, audited and repaired so the
-frontend and backend actually agree with each other.
+        // ============================================
+        // SHOW TOAST MESSAGES
+        // ============================================
+        function showToast(message, type = 'info', duration = 3000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : ''}
+                        ${type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : ''}
+                        ${type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
+                        ${type === 'info' ? '<i class="fas fa-info-circle"></i>' : ''}
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white/80 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
 
----
+        // ============================================
+        // CHECK IF USER IS ALREADY LOGGED IN
+        // ============================================
+        async function checkExistingSession() {
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                
+                if (error) {
+                    console.error('Session check error:', error);
+                    return false;
+                }
+                
+                if (session) {
+                    console.log('✅ User already logged in:', session.user.email);
+                    return true;
+                }
+                
+                return false;
+            } catch (error) {
+                console.error('Session check error:', error);
+                return false;
+            }
+        }
 
-## What was wrong, and what I fixed
+        // ============================================
+        // SOCIAL LOGIN
+        // ============================================
+        async function socialLogin(provider) {
+            try {
+                showToast(`Redirecting to ${provider}...`, 'info');
+                
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: provider,
+                    options: {
+                        redirectTo: `${window.location.origin}/dashboard.html`
+                    }
+                });
+                
+                if (error) throw error;
+                
+            } catch (error) {
+                console.error('Social login error:', error);
+                showToast(`Failed to login with ${provider}: ${error.message}`, 'error');
+            }
+        }
 
-Your app's pages (`dashboard.html`, `subjects.html`, `assignments.html`, `assessments.html`,
-`resources.html`, `results.html`, `login.html`, `register.html`) already had real Supabase
-queries wired in — that part of the build was solid. The problems were all in the database
-layer and three pages that were still static mockups:
+        // ============================================
+        // HANDLE LOGIN
+        // ============================================
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get values
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+            
+            // Reset errors
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            document.querySelectorAll('.error-message.show').forEach(el => el.classList.remove('show'));
+            
+            // Validate Email
+            if (!email) {
+                document.getElementById('email').classList.add('input-error');
+                document.getElementById('email-error').classList.add('show');
+                showToast('Please enter your email address', 'error');
+                return;
+            }
+            
+            // Validate Password
+            if (!password) {
+                document.getElementById('password').classList.add('input-error');
+                document.getElementById('password-error').classList.add('show');
+                showToast('Please enter your password', 'error');
+                return;
+            }
+            
+            // Show loading state
+            const btn = document.getElementById('login-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner spinner"></i> Logging in...';
+            
+            try {
+                // ============================================
+                // SUPABASE LOGIN
+                // ============================================
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) {
+                    throw new Error(error.message);
+                }
+                
+                console.log('✅ Login successful:', data.user.email);
+                
+                // Store session in localStorage if remember me is checked
+                if (rememberMe) {
+                    localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
+                }
+                
+                // Show success message
+                showToast('Welcome back! 🎉 Redirecting...', 'success');
+                
+                // Update button
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Logged In!';
+                btn.className = 'w-full bg-green-500 py-3 rounded-xl text-white font-semibold text-lg';
+                
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                
+                // Handle specific error cases
+                let errorMessage = error.message;
+                if (error.message.includes('Invalid login credentials')) {
+                    errorMessage = 'Invalid email or password. Please try again.';
+                } else if (error.message.includes('Email not confirmed')) {
+                    errorMessage = 'Please verify your email address before logging in.';
+                } else if (error.message.includes('Too many requests')) {
+                    errorMessage = 'Too many login attempts. Please wait a moment.';
+                }
+                
+                showToast(errorMessage, 'error');
+                
+                // Reset button
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                btn.className = 'w-full btn-primary py-3 rounded-xl text-white font-semibold text-lg flex items-center justify-center space-x-2';
+            }
+        });
 
-1. **`supabase-schema.sql` could not run at all.** Every table used `id UUID DEFAULT
-   uuid-ossp() PRIMARY KEY`. `uuid-ossp()` isn't a function — the extension is named
-   `uuid-ossp` but the function it provides is `uuid_generate_v4()`. Every single `CREATE
-   TABLE` statement would have failed. **Fixed:** all 20+ tables now use `uuid_generate_v4()`.
+        // ============================================
+        // REMOVE ERROR STATES ON INPUT
+        // ============================================
+        document.getElementById('email').addEventListener('input', function() {
+            this.classList.remove('input-error');
+            document.getElementById('email-error').classList.remove('show');
+        });
+        
+        document.getElementById('password').addEventListener('input', function() {
+            this.classList.remove('input-error');
+            document.getElementById('password-error').classList.remove('show');
+        });
 
-2. **New users always registered as blank learners, no matter what they picked.**
-   `register.html` correctly sends `first_name`, `last_name`, and `role` when it calls
-   `supabase.auth.signUp()`, but the database trigger `handle_new_user()` ignored that data
-   entirely and hard-coded `''`, `''`, `'learner'`. A teacher signing up would silently
-   become a nameless learner. **Fixed:** the trigger now reads
-   `NEW.raw_user_meta_data->>'first_name'` etc., with safe fallbacks.
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+Enter to submit form
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('login-form').dispatchEvent(new Event('submit'));
+            }
+        });
 
-3. **Row Level Security was full of holes.** Only 9 of the ~20 tables had any policy at all,
-   so most inserts/updates from the app (creating a subject, submitting an assignment, liking
-   a resource, posting an announcement) would have been silently rejected by Postgres.
-   **Fixed:** every table now has SELECT/INSERT/UPDATE/DELETE policies matched to what the
-   app actually does — learners manage their own enrollments/submissions, teachers manage
-   subjects/assessments they own, admins can manage everything.
+        // ============================================
+        // DEMO CREDENTIALS (for testing)
+        // ============================================
+        function fillDemoCredentials() {
+            document.getElementById('email').value = 'demo@castroeduconnect.com';
+            document.getElementById('password').value = 'Demo123!@#';
+            showToast('Demo credentials filled! Click Login', 'info');
+        }
 
-4. **Two tables the app queries didn't exist in the schema**: `resource_likes` and
-   `resource_comments` (used by `resources.html`). **Fixed:** added both, plus `topics`,
-   `sub_topics`, `class_enrollments`, `discussions`, and `discussion_comments` from your
-   original spec so the schema is ready if you build those pages out later.
-
-5. **`resources.html` inserts a comment as `{ comment: ... }`** but the schema had
-   `comment_text`. **Fixed:** schema column renamed to `comment` to match the app.
-
-6. **Submission status `'pending'`** is used throughout `assessments.html`/`assignments.html`
-   for essays awaiting grading, but the old CHECK constraint didn't allow it — every essay
-   submission would have thrown a database error. **Fixed:** added to the allowed list.
-
-7. **Dashboard average-score stat was always "N/A".** `loadStats()` selected
-   `status, total_score, total_marks` from `submissions` but then filtered/averaged on
-   `s.percentage`, a column it never fetched. **Fixed:** `percentage` added to the select.
-
-8. **`profile.html`, `settings.html`, and `announcements.html` were static demo pages**
-   (hard-coded "John Doe", fake numbers, a "Post Announcement" button that did nothing).
-   **Rebuilt from scratch** with the same look, now backed by real Supabase calls:
-   - Profile: loads/edits your real name, phone, city, bio; live stats (enrolled subjects,
-     average score, completed assessments) computed from your actual `subject_enrollments`
-     and `submissions`; real password change via `auth.updateUser()`.
-   - Settings: real dark-mode toggle, notification prefs (stored per-user), and an account
-     deletion request that's logged to `activity_logs` for an admin to action (the client SDK
-     can't delete a user's own auth account directly — that needs a service-role key on a
-     server, which is why this asks an admin rather than deleting on the spot).
-   - Announcements: loads real announcements from the database, searchable, with a working
-     "Post Announcement" flow for teachers/admins (visible only to those roles).
-
-9. **`resources.html`'s drag-and-drop upload was already wired to Supabase Storage**
-   (`supabaseClient.storage.from('resources').upload(...)`) — but the schema never created
-   that storage bucket, so every upload would have failed with a "bucket not found" error.
-   **Fixed:** `supabase-schema.sql` now creates the `resources` bucket (public read, any
-   signed-in user can upload) with storage-level RLS policies.
-
-10. **Two whole features were missing entirely** — the original spec called for an admin
-    console and a discussion forum, and the schema/RLS were ready for both, but no pages
-    existed. **Built from scratch:**
-    - `admin.html` — a tabbed console (Overview / Users / Grades / Classes / Subjects) for
-      admin accounts only. Promote/demote roles, suspend accounts, and full CRUD on grades,
-      classes, and subjects (including teacher assignment), plus live platform-wide stats.
-    - `discussions.html` — a per-subject discussion forum: start a thread, reply, upvote,
-      and (for teachers/admins) pin, close, or mark a reply as the best answer.
-
-11. **Clicking into an enrolled subject only opened a shallow info popup** — no notes, no
-    topics, no organized resources, and no way for a teacher to add any of that short of
-    the raw Table Editor. **Built `subject-detail.html`** — a Moodle-style course page:
-    - Students see the subject's topics as an accordion, each with its notes/lesson content
-      (and optional video links) and any resources filed under that topic, plus a "General
-      Resources" section for subject-wide files.
-    - Teachers (who own the subject) and admins get an inline management bar on the same
-      page — add/edit/delete topics, add/edit/delete notes under each topic, and upload
-      resources (PDF, Word, PowerPoint, images, video, audio, zip) straight into Supabase
-      Storage, scoped to a specific topic or general. No separate admin screen needed for
-      day-to-day content — it's managed right where students see it, the way Moodle's
-      course page works.
-    - `subjects.html`'s "View" button now opens this page instead of the old info-only
-      popup.
-
-12. **Assessment/assignment questions couldn't be answered at all — this is why marking
-    never worked.** Both `assessments.html` and `assignments.html` build each answer
-    choice's `onclick` handler as a plain JavaScript template string:
-    `onclick="selectChoice(${q.id}, ${idx})"`. Question IDs are UUIDs (e.g.
-    `3fa85f64-5717-4562-...`), and dropping one into that attribute **unquoted** produces
-    invalid JavaScript — `selectChoice(3fa85f64-5717-4562-...)`, which the browser tries to
-    parse as subtraction between undefined variables and fails silently. Clicking an answer
-    (or typing a short answer) did nothing, `currentAttempt.answers` stayed empty, and every
-    submission scored zero. **Fixed:** the question ID is now quoted as a string in every
-    `onclick`/`onchange` handler across both files (6 occurrences), so selecting an answer,
-    typing a short answer, and auto-marking on submit all work correctly.
-
-Everything else — your Bento-style layout, glassmorphism, dark mode, the assignment/quiz
-engine with auto-marking, the subjects/enrollment flow, the resources library — was already
-built and is untouched other than the fixes above. Every page's sidebar now links to
-Discussions and Admin Console too (the admin link is gated inside `admin.html` itself — any
-non-admin who clicks it sees an access-denied message and a button back to their dashboard).
-
----
-
-## Setup (10 minutes)
-
-### 1. Create/confirm your Supabase project
-You already have one configured in the code:
-`https://kfeqmjveemfacrmqrhzk.supabase.co`. If you want a fresh project instead, create one
-at supabase.com and update `SUPABASE_URL` / `SUPABASE_ANON_KEY` in every HTML file (search
-for `SUPABASE_URL` — it's the same two lines near the bottom of each page).
-
-### 2. Run the schema
-Open **Supabase Dashboard → SQL Editor → New query**, paste the entire contents of
-`supabase-schema.sql`, and run it. It's safe to re-run any time — it drops and recreates
-everything, so **don't run it against a project with real data you want to keep.**
-
-### 3. Set your auth settings
-Go to **Authentication → Providers → Email**. For quick local testing, turn off "Confirm
-email" so new accounts can log in immediately. For a real deployment, leave confirmation on.
-
-### 4. Register your first accounts
-Open `register.html` (or your deployed URL) and create:
-- One account with role **Administrator**
-- One account with role **Teacher**
-- One or more accounts with role **Learner**
-
-Because self-service admin signup is a real security risk in production, consider removing
-the "Administrator" option from `register.html`'s role dropdown once you've created your own
-admin account, and promote future admins manually:
-
-```sql
-UPDATE public.profiles SET role = 'admin' WHERE email = 'you@example.com';
-```
-
-### 5. Assign the teacher to a subject
-The seed data creates 5 sample Grade 1 subjects with no teacher assigned. In **Table Editor →
-subjects**, set `teacher_id` to your teacher account's `id` (copy it from **Table Editor →
-profiles**) for any subject you want them to manage. Then, as the learner, go to
-`subjects.html` and enroll.
-
-### 6. Open the app
-Just open `index.html` in a browser, or deploy the whole folder (see below) — there's no
-build step, it's static HTML/CSS/JS talking straight to Supabase.
-
----
-
-## Deploying
-
-Any static host works (GitHub Pages, Netlify, Vercel, Cloudflare Pages). For GitHub Pages:
-
-```bash
-git init
-git add .
-git commit -m "CastroEduConnect"
-git branch -M main
-git remote add origin https://github.com/<you>/castroeduconnect.git
-git push -u origin main
-```
-
-Then in the repo: **Settings → Pages → Deploy from branch → main → / (root)**.
-
----
-
-## Project structure
-
-```
-├── index.html              Public landing page
-├── login.html               Supabase email/password login
-├── register.html            Sign up (learner/teacher/admin)
-├── forgot-password.html     Password reset request
-├── dashboard.html            Role-aware dashboard with live stats
-├── subjects.html             Browse/enroll in subjects
-├── subject-detail.html         Moodle-style course page: topics, notes, resources (new)
-├── assignments.html          Assignment list, attempt flow, auto-marking
-├── assessments.html          Quiz/CAT/exam builder & attempt flow
-├── results.html              Grades & performance
-├── resources.html            Learning materials, likes & comments
-├── announcements.html        School-wide announcements (now live)
-├── discussions.html           Per-subject discussion forum (new)
-├── admin.html                  Admin console: users, grades, classes, subjects (new)
-├── profile.html              Your profile, editable (now live)
-├── settings.html             Preferences & account (now live)
-├── script.js                  Shared toast/skeleton/format helpers
-├── style.css                   Global styles, dark mode, animations
-├── logo.png                     Your brand mark (not yet wired into the UI —
-│                                 swap it in for the icon div in each page's
-│                                 nav/sidebar if you want it on screen)
-└── supabase-schema.sql        Full database schema — fixed & extended
-```
-
-## Known limitations / good next steps
-
-- **Self-registration allows picking "Administrator"** — fine for a demo, but restrict this
-  before going live (see step 4 above).
-- The account-deletion flow logs a request for an admin to action, rather than deleting
-  immediately — deleting a user's own `auth.users` row requires a service-role key, which
-  can't safely live in client-side code.
-- Storage RLS lets any authenticated user upload to the `resources` bucket path they choose;
-  if you want to lock uploads to teachers/admins only, tighten the
-  `resources_bucket_authenticated_upload` policy in `supabase-schema.sql` to check the
-  uploader's role.
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        (async function init() {
+            console.log('🚀 CastroEduConnect Login Page Loading...');
+            console.log('📧 Supabase URL:', SUPABASE_URL);
+            console.log('🔑 Supabase Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
+            
+            // Check if user is already logged in
+            const hasSession = await checkExistingSession();
+            
+            if (hasSession) {
+                console.log('👤 Active session found, redirecting to dashboard...');
+                showToast('You are already logged in! Redirecting...', 'info');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+                return;
+            }
+            
+            console.log('👤 No active session, showing login form');
+            
+            // Add demo fill option (double-click on logo)
+            document.querySelector('.gradient-bg').addEventListener('dblclick', fillDemoCredentials);
+            console.log('💡 Double-click the logo to fill demo credentials');
+            
+            console.log('✅ Login page initialized successfully');
+        })();
+    </script>
+</body>
+</html>
