@@ -1,1704 +1,320 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Results - CastroEduConnect</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
-    
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <style>
-        /* Sidebar Styles */
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.75rem;
-            color: #6b7280;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .sidebar-link:hover {
-            background: rgba(37, 99, 235, 0.1);
-            color: #2563EB;
-        }
-        .sidebar-link.active {
-            background: linear-gradient(135deg, #2563EB, #4F46E5);
-            color: white;
-        }
-        .dark .sidebar-link {
-            color: #9ca3af;
-        }
-        .dark .sidebar-link:hover {
-            background: rgba(37, 99, 235, 0.2);
-            color: #60a5fa;
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #2563EB 0%, #4F46E5 50%, #7C3AED 100%);
-        }
-        
-        .spinner {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Toast Container */
-        .toast-container {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .toast {
-            padding: 1rem 1.5rem;
-            border-radius: 0.75rem;
-            color: white;
-            animation: slideInRight 0.5s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            min-width: 300px;
-            max-width: 450px;
-        }
-        .toast-success { background: #10B981; }
-        .toast-error { background: #EF4444; }
-        .toast-warning { background: #F59E0B; }
-        .toast-info { background: #3B82F6; }
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 9998;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-overlay.active {
-            display: flex;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 2rem;
-            padding: 2rem;
-            max-width: 800px;
-            width: 95%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: modalPop 0.3s ease;
-        }
-        .dark .modal-content {
-            background: #1a1a2e;
-        }
-        @keyframes modalPop {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        
-        /* Status Badges */
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-        .status-graded { background: #D1FAE5; color: #059669; }
-        .status-pending { background: #FEF3C7; color: #D97706; }
-        .status-failed { background: #FEE2E2; color: #DC2626; }
-        .status-excellent { background: #DBEAFE; color: #2563EB; }
-        .status-not-submitted { background: #F3F4F6; color: #6B7280; }
-        
-        .dark .status-graded { background: #065F46; color: #34D399; }
-        .dark .status-pending { background: #78350F; color: #FBBF24; }
-        .dark .status-failed { background: #7F1D1D; color: #F87171; }
-        .dark .status-excellent { background: #1E3A5F; color: #60A5FA; }
-        .dark .status-not-submitted { background: #1F2937; color: #6B7280; }
-        
-        /* Grade Badges */
-        .grade-a { background: #D1FAE5; color: #059669; }
-        .grade-b { background: #DBEAFE; color: #2563EB; }
-        .grade-c { background: #FEF3C7; color: #D97706; }
-        .grade-d { background: #FEE2E2; color: #DC2626; }
-        .grade-f { background: #FEE2E2; color: #DC2626; }
-        
-        .dark .grade-a { background: #065F46; color: #34D399; }
-        .dark .grade-b { background: #1E3A5F; color: #60A5FA; }
-        .dark .grade-c { background: #78350F; color: #FBBF24; }
-        .dark .grade-d { background: #7F1D1D; color: #F87171; }
-        .dark .grade-f { background: #7F1D1D; color: #F87171; }
-        
-        /* Result Cards */
-        .result-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-        .result-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
-        }
-        .dark .result-card {
-            background: #1a1a2e;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        /* Progress Ring */
-        .progress-ring {
-            position: relative;
-            width: 80px;
-            height: 80px;
-        }
-        .progress-ring svg {
-            transform: rotate(-90deg);
-        }
-        .progress-ring .bg {
-            fill: none;
-            stroke: #E5E7EB;
-            stroke-width: 6;
-        }
-        .dark .progress-ring .bg {
-            stroke: #374151;
-        }
-        .progress-ring .progress {
-            fill: none;
-            stroke-width: 6;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 1s ease;
-        }
-        .progress-ring .center-text {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.25rem;
-        }
-        
-        /* Stats Cards */
-        .stat-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 1.25rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            opacity: 0.1;
-        }
-        .stat-card-blue::before { background: #2563EB; }
-        .stat-card-green::before { background: #10B981; }
-        .stat-card-purple::before { background: #7C3AED; }
-        .stat-card-orange::before { background: #F59E0B; }
-        .dark .stat-card {
-            background: #1a1a2e;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        /* Table */
-        .table-container {
-            overflow-x: auto;
-            border-radius: 1.5rem;
-            background: white;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-        .dark .table-container {
-            background: #1a1a2e;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        thead {
-            background: #F9FAFB;
-            border-bottom: 2px solid #E5E7EB;
-        }
-        .dark thead {
-            background: #111827;
-            border-bottom: 2px solid #374151;
-        }
-        th {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #6B7280;
-        }
-        .dark th {
-            color: #9CA3AF;
-        }
-        td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #F3F4F6;
-            font-size: 0.875rem;
-        }
-        .dark td {
-            border-bottom: 1px solid #374151;
-        }
-        tbody tr {
-            transition: background-color 0.2s ease;
-        }
-        tbody tr:hover {
-            background: #F9FAFB;
-        }
-        .dark tbody tr:hover {
-            background: #1F2937;
-        }
-        
-        /* Pagination */
-        .pagination {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem;
-            border-top: 1px solid #E5E7EB;
-        }
-        .dark .pagination {
-            border-top: 1px solid #374151;
-        }
-        .pagination button {
-            padding: 0.5rem 1rem;
-            border-radius: 0.75rem;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-        .pagination button:hover:not(:disabled) {
-            background: #F3F4F6;
-        }
-        .dark .pagination button:hover:not(:disabled) {
-            background: #374151;
-        }
-        .pagination button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .pagination .active-page {
-            background: #2563EB;
-            color: white;
-        }
-        .dark .pagination .active-page {
-            background: #3B82F6;
-        }
-        
-        /* Chart Container */
-        .chart-container {
-            position: relative;
-            height: 250px;
-        }
-        
-        /* Export Button */
-        .btn-export {
-            background: white;
-            color: #2563EB;
-            border: 2px solid #2563EB;
-            transition: all 0.3s ease;
-        }
-        .btn-export:hover {
-            background: #2563EB;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
-        }
-        .dark .btn-export {
-            background: transparent;
-            color: #60A5FA;
-            border-color: #60A5FA;
-        }
-        .dark .btn-export:hover {
-            background: #1E3A5F;
-            color: white;
-        }
-        
-        .skeleton-row td {
-            padding: 0.75rem 1rem;
-        }
-        .skeleton-row .skeleton {
-            height: 20px;
-            border-radius: 0.5rem;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 dark:bg-gray-900">
-    <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl z-50 transition-transform -translate-x-full md:translate-x-0" id="sidebar">
-        <div class="p-6">
-            <div class="flex items-center space-x-3 mb-8">
-                <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
-                    <i class="fas fa-graduation-cap text-white text-xl"></i>
-                </div>
-                <span class="text-xl font-bold text-gray-900 dark:text-white">CastroEduConnect</span>
-            </div>
-            
-            <nav class="space-y-1">
-                <a href="dashboard.html" class="sidebar-link">
-                    <i class="fas fa-th-large w-5"></i> Dashboard
-                </a>
-                <a href="subjects.html" class="sidebar-link">
-                    <i class="fas fa-book w-5"></i> Subjects
-                </a>
-                <a href="assignments.html" class="sidebar-link">
-                    <i class="fas fa-tasks w-5"></i> Assignments
-                </a>
-                <a href="assessments.html" class="sidebar-link">
-                    <i class="fas fa-question-circle w-5"></i> Assessments
-                </a>
-                <a href="results.html" class="sidebar-link active">
-                    <i class="fas fa-chart-bar w-5"></i> Results
-                </a>
-                <a href="resources.html" class="sidebar-link">
-                    <i class="fas fa-folder w-5"></i> Resources
-                </a>
-                <a href="announcements.html" class="sidebar-link">
-                    <i class="fas fa-bullhorn w-5"></i> Announcements
-                </a>
-                <a href="discussions.html" class="sidebar-link">
-                    <i class="fas fa-comments w-5"></i> Discussions
-                </a>
-                <a href="admin.html" class="sidebar-link">
-                    <i class="fas fa-user-shield w-5"></i> Admin Console
-                </a>
-                <a href="profile.html" class="sidebar-link">
-                    <i class="fas fa-user w-5"></i> Profile
-                </a>
-                <a href="settings.html" class="sidebar-link">
-                    <i class="fas fa-cog w-5"></i> Settings
-                </a>
-                <button onclick="logoutUser()" class="sidebar-link w-full text-left text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
-                    <i class="fas fa-sign-out-alt w-5"></i> Logout
-                </button>
-            </nav>
-        </div>
-    </aside>
+# CastroEduConnect 🚀
 
-    <!-- Main Content -->
-    <main class="md:ml-64 min-h-screen">
-        <!-- Top Bar -->
-        <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between px-6 py-4">
-                <div class="flex items-center space-x-4">
-                    <button onclick="toggleSidebar()" class="md:hidden text-gray-600 dark:text-gray-300 text-2xl">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Results & Analytics</h1>
-                </div>
-                
-                <div class="flex-1 max-w-xl mx-4">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="search-input" placeholder="Search results..." 
-                               class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white" />
-                    </div>
-                </div>
-                
-                <div class="flex items-center space-x-4">
-                    <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 hover:text-blue-600 text-xl">
-                        <i id="dark-mode-icon" class="fas fa-moon"></i>
-                    </button>
-                    <div class="relative" id="notif-wrapper">
-                        <button onclick="toggleNotifDropdown()" class="relative text-gray-600 dark:text-gray-300 hover:text-blue-600">
-                            <i class="fas fa-bell text-xl"></i>
-                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">0</span>
-                        </button>
-                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
-                            <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                                <span class="font-semibold text-gray-900 dark:text-white text-sm">Notifications</span>
-                                <button onclick="markAllNotifsRead()" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Mark all read</button>
-                            </div>
-                            <div id="notif-list" class="divide-y divide-gray-100 dark:divide-gray-700"><p class="p-4 text-sm text-gray-400">Loading...</p></div>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='profile.html'">
-                        <div id="user-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="hidden sm:block">
-                            <div id="user-name" class="text-sm font-semibold text-gray-900 dark:text-white">Loading...</div>
-                            <div id="user-role" class="text-xs text-gray-500 dark:text-gray-400">Loading...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
+**Connecting Learners, Empowering Futures.**
 
-        <!-- Content -->
-        <div class="p-6">
-            <!-- Performance Overview -->
-            <div class="gradient-bg rounded-3xl p-6 md:p-8 mb-8 text-white shadow-xl">
-                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div>
-                        <h2 id="greeting" class="text-2xl md:text-3xl font-bold">📊 Your Performance</h2>
-                        <p class="text-white/80 mt-2">Track your academic progress across all subjects</p>
-                    </div>
-                    <div class="flex items-center gap-6">
-                        <div class="text-center">
-                            <div id="overall-grade" class="text-4xl font-bold">-</div>
-                            <div class="text-sm text-white/80">Overall Grade</div>
-                        </div>
-                        <div class="text-center">
-                            <div id="overall-score" class="text-4xl font-bold">-</div>
-                            <div class="text-sm text-white/80">Average Score</div>
-                        </div>
-                        <button onclick="exportReport()" class="btn-export px-6 py-3 rounded-xl font-semibold flex items-center gap-2">
-                            <i class="fas fa-download"></i> Export Report
-                        </button>
-                    </div>
-                </div>
-            </div>
+A Learning Management System built with HTML5, Tailwind CSS, vanilla JavaScript, and Supabase
+(PostgreSQL + Auth). This package is your uploaded project, audited and repaired so the
+frontend and backend actually agree with each other.
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8" id="stats-container">
-                <div class="stat-card stat-card-blue text-center">
-                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="stat-total">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Assessments</div>
-                </div>
-                <div class="stat-card stat-card-green text-center">
-                    <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="stat-passed">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Passed</div>
-                </div>
-                <div class="stat-card stat-card-orange text-center">
-                    <div class="text-2xl font-bold text-orange-600 dark:text-orange-400" id="stat-failed">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Failed</div>
-                </div>
-                <div class="stat-card stat-card-purple text-center">
-                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400" id="stat-pending">0</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Pending</div>
-                </div>
-                <div class="stat-card stat-card-blue text-center">
-                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="stat-best">0%</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Best Score</div>
-                </div>
-            </div>
+---
 
-            <!-- Charts Row -->
-            <div class="grid lg:grid-cols-2 gap-6 mb-8">
-                <div class="result-card">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📈 Performance Trend</h3>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
-                <div class="result-card">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📊 Subject Performance</h3>
-                    <div class="chart-container">
-                        <canvas id="subjectChart"></canvas>
-                    </div>
-                </div>
-            </div>
+## What was wrong, and what I fixed
 
-            <!-- Results Table -->
-            <div class="table-container">
-                <div class="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <select id="filter-subject" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            <option value="">All Subjects</option>
-                        </select>
-                        <select id="filter-status" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            <option value="">All Status</option>
-                            <option value="graded">Graded</option>
-                            <option value="pending">Pending</option>
-                            <option value="failed">Failed</option>
-                            <option value="excellent">Excellent</option>
-                        </select>
-                        <select id="filter-grade" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            <option value="">All Grades</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                            <option value="F">F</option>
-                        </select>
-                    </div>
-                    <button onclick="refreshData()" class="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition font-medium">
-                        <i class="fas fa-sync-alt mr-2"></i> Refresh
-                    </button>
-                </div>
+Your app's pages (`dashboard.html`, `subjects.html`, `assignments.html`, `assessments.html`,
+`resources.html`, `results.html`, `login.html`, `register.html`) already had real Supabase
+queries wired in — that part of the build was solid. The problems were all in the database
+layer and three pages that were still static mockups:
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Assessment</th>
-                            <th>Subject</th>
-                            <th>Score</th>
-                            <th>Grade</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="results-table-body">
-                        <!-- Loading Skeletons -->
-                        <tr class="skeleton-row">
-                            <td><div class="skeleton w-8 h-5"></div></td>
-                            <td><div class="skeleton w-32 h-5"></div></td>
-                            <td><div class="skeleton w-24 h-5"></div></td>
-                            <td><div class="skeleton w-12 h-5"></div></td>
-                            <td><div class="skeleton w-8 h-5"></div></td>
-                            <td><div class="skeleton w-16 h-5"></div></td>
-                            <td><div class="skeleton w-24 h-5"></div></td>
-                            <td><div class="skeleton w-8 h-8"></div></td>
-                        </tr>
-                        <tr class="skeleton-row">
-                            <td><div class="skeleton w-8 h-5"></div></td>
-                            <td><div class="skeleton w-32 h-5"></div></td>
-                            <td><div class="skeleton w-24 h-5"></div></td>
-                            <td><div class="skeleton w-12 h-5"></div></td>
-                            <td><div class="skeleton w-8 h-5"></div></td>
-                            <td><div class="skeleton w-16 h-5"></div></td>
-                            <td><div class="skeleton w-24 h-5"></div></td>
-                            <td><div class="skeleton w-8 h-8"></div></td>
-                        </tr>
-                        <tr class="skeleton-row">
-                            <td><div class="skeleton w-8 h-5"></div></td>
-                            <td><div class="skeleton w-32 h-5"></div></td>
-                            <td><div class="skeleton w-24 h-5"></div></td>
-                            <td><div class="skeleton w-12 h-5"></div></td>
-                            <td><div class="skeleton w-8 h-5"></div></td>
-                            <td><div class="skeleton w-16 h-5"></div></td>
-                            <td><div class="skeleton w-24 h-5"></div></td>
-                            <td><div class="skeleton w-8 h-8"></div></td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <!-- Pagination -->
-                <div class="pagination" id="pagination-container">
-                    <span class="text-sm text-gray-600 dark:text-gray-400" id="pagination-info">Showing 0 of 0</span>
-                    <div class="flex items-center gap-2">
-                        <button onclick="previousPage()" id="prev-page" disabled>
-                            <i class="fas fa-chevron-left"></i> Previous
-                        </button>
-                        <div id="page-numbers" class="flex gap-1"></div>
-                        <button onclick="nextPage()" id="next-page">
-                            Next <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+1. **`supabase-schema.sql` could not run at all.** Every table used `id UUID DEFAULT
+   uuid-ossp() PRIMARY KEY`. `uuid-ossp()` isn't a function — the extension is named
+   `uuid-ossp` but the function it provides is `uuid_generate_v4()`. Every single `CREATE
+   TABLE` statement would have failed. **Fixed:** all 20+ tables now use `uuid_generate_v4()`.
 
-    <!-- Result Detail Modal -->
-    <div id="result-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="flex items-center justify-between mb-6">
-                <h2 id="modal-title" class="text-2xl font-bold text-gray-900 dark:text-white">Result Details</h2>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div id="modal-body" class="space-y-4">
-                <!-- Dynamic content -->
-            </div>
-        </div>
-    </div>
+2. **New users always registered as blank learners, no matter what they picked.**
+   `register.html` correctly sends `first_name`, `last_name`, and `role` when it calls
+   `supabase.auth.signUp()`, but the database trigger `handle_new_user()` ignored that data
+   entirely and hard-coded `''`, `''`, `'learner'`. A teacher signing up would silently
+   become a nameless learner. **Fixed:** the trigger now reads
+   `NEW.raw_user_meta_data->>'first_name'` etc., with safe fallbacks.
 
-    <!-- Toast Container -->
-    <div id="toast-container" class="toast-container"></div>
+3. **Row Level Security was full of holes.** Only 9 of the ~20 tables had any policy at all,
+   so most inserts/updates from the app (creating a subject, submitting an assignment, liking
+   a resource, posting an announcement) would have been silently rejected by Postgres.
+   **Fixed:** every table now has SELECT/INSERT/UPDATE/DELETE policies matched to what the
+   app actually does — learners manage their own enrollments/submissions, teachers manage
+   subjects/assessments they own, admins can manage everything.
 
-    <script>
-        // ============================================
-        // SUPABASE CONFIGURATION
-        // ============================================
-        const SUPABASE_URL = 'https://kfeqmjveemfacrmqrhzk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_p5OiC1XnOlBLKs2nUYAL1w_LBBh5kDo';
-        
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase client initialized');
+4. **Two tables the app queries didn't exist in the schema**: `resource_likes` and
+   `resource_comments` (used by `resources.html`). **Fixed:** added both, plus `topics`,
+   `sub_topics`, `class_enrollments`, `discussions`, and `discussion_comments` from your
+   original spec so the schema is ready if you build those pages out later.
 
-        // ============================================
-        // STATE
-        // ============================================
-        let currentUser = null;
-        let userProfile = null;
-        let userRole = 'learner';
-        let results = [];
-        let subjects = [];
-        let filteredResults = [];
-        let currentPage = 1;
-        const itemsPerPage = 10;
-        let charts = {};
+5. **`resources.html` inserts a comment as `{ comment: ... }`** but the schema had
+   `comment_text`. **Fixed:** schema column renamed to `comment` to match the app.
 
-        // ============================================
-        // TOAST NOTIFICATIONS
-        // ============================================
-        function showToast(message, type = 'info', duration = 3000) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        ${type === 'success' ? '<i class="fas fa-check-circle"></i>' : ''}
-                        ${type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : ''}
-                        ${type === 'warning' ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
-                        ${type === 'info' ? '<i class="fas fa-info-circle"></i>' : ''}
-                        <span>${message}</span>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-white/80 hover:text-white">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                toast.style.transition = 'all 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
-        }
+6. **Submission status `'pending'`** is used throughout `assessments.html`/`assignments.html`
+   for essays awaiting grading, but the old CHECK constraint didn't allow it — every essay
+   submission would have thrown a database error. **Fixed:** added to the allowed list.
 
-        // ============================================
-        // SIDEBAR TOGGLE
-        // ============================================
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-        }
+7. **Dashboard average-score stat was always "N/A".** `loadStats()` selected
+   `status, total_score, total_marks` from `submissions` but then filtered/averaged on
+   `s.percentage`, a column it never fetched. **Fixed:** `percentage` added to the select.
 
-        // ============================================
-        // LOGOUT
-        // ============================================
-        async function logoutUser() {
-            try {
-                const { error } = await supabaseClient.auth.signOut();
-                if (error) throw error;
-                
-                showToast('Logged out successfully!', 'success');
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1000);
-            } catch (error) {
-                console.error('Logout error:', error);
-                showToast('Error logging out: ' + error.message, 'error');
-            }
-        }
+8. **`profile.html`, `settings.html`, and `announcements.html` were static demo pages**
+   (hard-coded "John Doe", fake numbers, a "Post Announcement" button that did nothing).
+   **Rebuilt from scratch** with the same look, now backed by real Supabase calls:
+   - Profile: loads/edits your real name, phone, city, bio; live stats (enrolled subjects,
+     average score, completed assessments) computed from your actual `subject_enrollments`
+     and `submissions`; real password change via `auth.updateUser()`.
+   - Settings: real dark-mode toggle, notification prefs (stored per-user), and an account
+     deletion request that's logged to `activity_logs` for an admin to action (the client SDK
+     can't delete a user's own auth account directly — that needs a service-role key on a
+     server, which is why this asks an admin rather than deleting on the spot).
+   - Announcements: loads real announcements from the database, searchable, with a working
+     "Post Announcement" flow for teachers/admins (visible only to those roles).
 
-        // ============================================
-        // CHECK AUTHENTICATION
-        // ============================================
-        async function checkAuth() {
-            try {
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
-                
-                if (error) throw error;
-                
-                if (!session) {
-                    console.log('No session found, redirecting to login');
-                    window.location.href = 'login.html';
-                    return false;
-                }
-                
-                currentUser = session.user;
-                refreshNotifBadge();
-                console.log('✅ User authenticated:', currentUser.email);
-                
-                await fetchUserProfile();
-                updateUserUI();
-                await loadData();
-                
-                return true;
-            } catch (error) {
-                console.error('Auth check error:', error);
-                window.location.href = 'login.html';
-                return false;
-            }
-        }
+9. **`resources.html`'s drag-and-drop upload was already wired to Supabase Storage**
+   (`supabaseClient.storage.from('resources').upload(...)`) — but the schema never created
+   that storage bucket, so every upload would have failed with a "bucket not found" error.
+   **Fixed:** `supabase-schema.sql` now creates the `resources` bucket (public read, any
+   signed-in user can upload) with storage-level RLS policies.
 
-        // ============================================
-        // FETCH USER PROFILE
-        // ============================================
-        async function fetchUserProfile() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                if (error) throw error;
-                
-                userProfile = data;
-                userRole = data.role || 'learner';
-                console.log('👤 User profile loaded:', userProfile);
-                
-                return userProfile;
-            } catch (error) {
-                console.error('Error fetching profile:', error);
-                userProfile = {
-                    first_name: currentUser.user_metadata?.first_name || 'User',
-                    last_name: currentUser.user_metadata?.last_name || '',
-                    role: currentUser.user_metadata?.role || 'learner'
-                };
-                userRole = userProfile.role;
-                return userProfile;
-            }
-        }
+10. **Two whole features were missing entirely** — the original spec called for an admin
+    console and a discussion forum, and the schema/RLS were ready for both, but no pages
+    existed. **Built from scratch:**
+    - `admin.html` — a tabbed console (Overview / Users / Grades / Classes / Subjects) for
+      admin accounts only. Promote/demote roles, suspend accounts, and full CRUD on grades,
+      classes, and subjects (including teacher assignment), plus live platform-wide stats.
+    - `discussions.html` — a per-subject discussion forum: start a thread, reply, upvote,
+      and (for teachers/admins) pin, close, or mark a reply as the best answer.
 
-        // ============================================
-        // UPDATE UI WITH USER INFO
-        // ============================================
-        function updateUserUI() {
-            const firstName = userProfile?.first_name || currentUser?.user_metadata?.first_name || 'User';
-            const lastName = userProfile?.last_name || currentUser?.user_metadata?.last_name || '';
-            const fullName = `${firstName} ${lastName}`.trim();
-            
-            document.getElementById('user-name').textContent = fullName || currentUser.email;
-            const roleDisplay = userRole.charAt(0).toUpperCase() + userRole.slice(1);
-            document.getElementById('user-role').textContent = roleDisplay;
-            
-            const initials = firstName.charAt(0) + (lastName ? lastName.charAt(0) : '');
-            document.getElementById('user-avatar').innerHTML = initials || '<i class="fas fa-user"></i>';
-            
-            document.getElementById('greeting').textContent = `📊 ${firstName}'s Performance`;
-        }
+11. **Clicking into an enrolled subject only opened a shallow info popup** — no notes, no
+    topics, no organized resources, and no way for a teacher to add any of that short of
+    the raw Table Editor. **Built `subject-detail.html`** — a Moodle-style course page:
+    - Students see the subject's topics as an accordion, each with its notes/lesson content
+      (and optional video links) and any resources filed under that topic, plus a "General
+      Resources" section for subject-wide files.
+    - Teachers (who own the subject) and admins get an inline management bar on the same
+      page — add/edit/delete topics, add/edit/delete notes under each topic, and upload
+      resources (PDF, Word, PowerPoint, images, video, audio, zip) straight into Supabase
+      Storage, scoped to a specific topic or general. No separate admin screen needed for
+      day-to-day content — it's managed right where students see it, the way Moodle's
+      course page works.
+    - `subjects.html`'s "View" button now opens this page instead of the old info-only
+      popup.
 
-        // ============================================
-        // LOAD DATA
-        // ============================================
-        async function loadData() {
-            try {
-                await loadSubjects();
-                await loadResults();
-                populateFilters();
-                applyFilters();
-                updateStats();
-                updateOverview();
-                renderCharts();
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showToast('Error loading results data', 'error');
-            }
-        }
+12. **Assessment/assignment questions couldn't be answered at all — this is why marking
+    never worked.** Both `assessments.html` and `assignments.html` build each answer
+    choice's `onclick` handler as a plain JavaScript template string:
+    `onclick="selectChoice(${q.id}, ${idx})"`. Question IDs are UUIDs (e.g.
+    `3fa85f64-5717-4562-...`), and dropping one into that attribute **unquoted** produces
+    invalid JavaScript — `selectChoice(3fa85f64-5717-4562-...)`, which the browser tries to
+    parse as subtraction between undefined variables and fails silently. Clicking an answer
+    (or typing a short answer) did nothing, `currentAttempt.answers` stayed empty, and every
+    submission scored zero. **Fixed:** the question ID is now quoted as a string in every
+    `onclick`/`onchange` handler across both files (6 occurrences), so selecting an answer,
+    typing a short answer, and auto-marking on submit all work correctly.
 
-        // ============================================
-        // LOAD SUBJECTS
-        // ============================================
-        async function loadSubjects() {
-            try {
-                let query = supabaseClient
-                    .from('subjects')
-                    .select('*');
-                
-                if (userRole === 'learner') {
-                    const { data: enrolls } = await supabaseClient
-                        .from('subject_enrollments')
-                        .select('subject_id')
-                        .eq('learner_id', currentUser.id)
-                        .eq('status', 'active');
-                    
-                    const subjectIds = enrolls?.map(e => e.subject_id) || [];
-                    if (subjectIds.length > 0) {
-                        query = query.in('id', subjectIds);
-                    } else {
-                        subjects = [];
-                        return;
-                    }
-                } else if (userRole === 'teacher') {
-                    query = query.eq('teacher_id', currentUser.id);
-                }
-                // admin: no filter — sees every subject in the system
-                
-                const { data, error } = await query;
-                if (error) throw error;
-                subjects = data || [];
-                console.log('📚 Subjects loaded:', subjects.length);
-                return subjects;
-            } catch (error) {
-                console.error('Error loading subjects:', error);
-                subjects = [];
-                return [];
-            }
-        }
+13. **The "admin sees nothing" bug, found in five different places.** A pattern repeated
+    across the app: `if (userRole === 'learner') { ... } else { query = query.eq('teacher_id',
+    currentUser.id); }`. That `else` branch was meant for teachers only, but it silently
+    caught admins too — so an admin account, which doesn't personally teach any subject,
+    would see an **empty subject list, empty assessments list, and empty resources list**
+    everywhere in the app. This is likely the biggest reason "resources" and "assessments"
+    looked broken. Fixed in `resources.html`, `assessments.html`, `assignments.html`, and
+    `results.html` (5 occurrences total) — admins now correctly see everything, teachers see
+    only what they own.
 
-        // ============================================
-        // LOAD RESULTS
-        // ============================================
-        async function loadResults() {
-            try {
-                let query = supabaseClient
-                    .from('submissions')
-                    .select(`
-                        *,
-                        assessments (
-                            id, title, assessment_type, total_marks, passing_mark,
-                            subjects (id, name, color)
-                        ),
-                        profiles (first_name, last_name)
-                    `);
-                
-                if (userRole === 'learner') {
-                    query = query.eq('learner_id', currentUser.id);
-                } else if (userRole === 'teacher') {
-                    // Show results for assessments this teacher owns (not just ones they graded)
-                    const { data: myAssessments } = await supabaseClient
-                        .from('assessments').select('id').eq('teacher_id', currentUser.id);
-                    const ids = (myAssessments || []).map(a => a.id);
-                    if (!ids.length) { results = []; return; }
-                    query = query.in('assessment_id', ids);
-                }
-                // admin: no filter — sees every result in the system
-                
-                // Only get completed submissions
-                query = query.in('status', ['graded', 'returned']);
-                
-                const { data, error } = await query.order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                results = data || [];
-                console.log('📊 Results loaded:', results.length);
-                return results;
-            } catch (error) {
-                console.error('Error loading results:', error);
-                results = [];
-                return [];
-            }
-        }
+14. **`results.html` filtered teacher submissions by the wrong column.** It used
+    `submissions.teacher_id` (who *graded* a submission — null until someone does) instead
+    of checking which assessments the teacher actually owns. A teacher would see almost none
+    of their students' results. Fixed to look up the teacher's own assessment IDs first.
 
-        // ============================================
-        // POPULATE FILTERS
-        // ============================================
-        function populateFilters() {
-            const subjectSelect = document.getElementById('filter-subject');
-            const options = subjectSelect.querySelectorAll('option:not([value=""])');
-            options.forEach(opt => opt.remove());
-            
-            subjects.forEach(subject => {
-                const option = document.createElement('option');
-                option.value = subject.id;
-                option.textContent = subject.name;
-                subjectSelect.appendChild(option);
-            });
-        }
+15. **`assignments.html` and `assessments.html` were creating identical data.** Both hard-
+    coded `assessment_type: 'assignment'` on save, so "Assessments" was really just a second
+    copy of "Assignments" — no quizzes, CATs, or exams could actually be created. Added a
+    Type selector (Quiz / CAT / Exam) to the assessments builder, and now each page only
+    shows its own type — Assignments shows `assessment_type = 'assignment'`, Assessments
+    shows `quiz`/`cat`/`exam`. This is also why grading was reorganized (next point).
 
-        // ============================================
-        // APPLY FILTERS
-        // ============================================
-        document.getElementById('filter-subject').addEventListener('change', applyFilters);
-        document.getElementById('filter-status').addEventListener('change', applyFilters);
-        document.getElementById('filter-grade').addEventListener('change', applyFilters);
-        document.getElementById('search-input').addEventListener('input', applyFilters);
+16. **Essay/short-answer grading only existed on the Assessments page, not Assignments.**
+    Rather than duplicate ~200 lines of working grading UI, `assignments.html` now has a
+    "Grade Essays & Short Answers" button that deep-links into `assessments.html`'s existing
+    grading tab (`assessments.html?tab=grade`) — and that tab was widened to pull in
+    submissions across *all* assessment types (previously it derived submissions from a list
+    that, after fix #15, only contained quizzes/CATs/exams, which would have hidden
+    assignment essays from grading — fixed at the same time).
 
-        function applyFilters() {
-            const subjectFilter = document.getElementById('filter-subject').value;
-            const statusFilter = document.getElementById('filter-status').value;
-            const gradeFilter = document.getElementById('filter-grade').value;
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
-            
-            filteredResults = [...results];
-            
-            if (subjectFilter) {
-                filteredResults = filteredResults.filter(r => 
-                    r.assessments?.subject_id === subjectFilter
-                );
-            }
-            
-            if (statusFilter) {
-                filteredResults = filteredResults.filter(r => {
-                    const score = r.percentage || 0;
-                    const passing = r.assessments?.passing_mark || 50;
-                    if (statusFilter === 'graded') return r.status === 'graded';
-                    if (statusFilter === 'pending') return r.status === 'pending';
-                    if (statusFilter === 'failed') return score < passing;
-                    if (statusFilter === 'excellent') return score >= 80;
-                    return true;
-                });
-            }
-            
-            if (gradeFilter) {
-                filteredResults = filteredResults.filter(r => {
-                    const grade = getGrade(r.percentage || 0);
-                    return grade === gradeFilter;
-                });
-            }
-            
-            if (searchTerm) {
-                filteredResults = filteredResults.filter(r => 
-                    r.assessments?.title?.toLowerCase().includes(searchTerm) ||
-                    r.assessments?.subjects?.name?.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            currentPage = 1;
-            renderTable();
-            updatePagination();
-        }
+17. **Assignments and assessments can now be created directly from a subject's course
+    page**, the way you asked — `subject-detail.html` lists a subject's activities and gives
+    teachers/admins "New Assignment" / "New Quiz/Exam" buttons that deep-link into the
+    existing builders with that subject pre-selected
+    (`assignments.html?subject=ID&action=create`).
 
-        // ============================================
-        // GET GRADE
-        // ============================================
-        function getGrade(percentage) {
-            if (percentage >= 80) return 'A';
-            if (percentage >= 70) return 'B';
-            if (percentage >= 60) return 'C';
-            if (percentage >= 50) return 'D';
-            return 'F';
-        }
+18. **Admin can now add users, with a proper explanation of why it needs a server.**
+    Creating another person's login (`supabase.auth.admin.createUser`) requires your Supabase
+    **service role key** — a key that must never be shipped to browser JavaScript, since
+    anyone could open devtools and read it, then bypass every RLS policy in your database.
+    So this is implemented the way production systems (Moodle included, under the hood) do
+    it: a **Supabase Edge Function** (`supabase/functions/admin-create-user/index.ts`) that
+    runs on Supabase's servers, checks the caller is really an admin, then creates the user.
+    `admin.html` has a new "Add User" button and modal that calls this function. **You must
+    deploy the function and paste its URL into `admin.html` before this button will work —
+    see "Enabling Add User" below.** Until then, it shows a clear on-screen warning instead
+    of failing silently.
 
-        function getGradeClass(grade) {
-            return `grade-${grade.toLowerCase()}`;
-        }
+19. **Learners can be admitted into a grade/class**, both when an admin creates a new
+    learner account and when editing an existing one (`admin.html`'s Manage User modal now
+    has Grade and Class dropdowns, and writes to `class_enrollments` automatically).
 
-        function getStatusClass(percentage, passingMark) {
-            if (!percentage && percentage !== 0) return 'status-not-submitted';
-            if (percentage >= 80) return 'status-excellent';
-            if (percentage >= passingMark) return 'status-graded';
-            return 'status-failed';
-        }
+20. **The notification bell across every page was decorative** — a hard-coded "3" badge
+    whose click handler just popped a fake toast saying "You have 3 new notifications." It
+    didn't lead anywhere. **Replaced everywhere** with a real dropdown backed by the
+    `notifications` table: a live unread count, a list of actual notifications, click-to-
+    mark-as-read, and "mark all read." Two new database triggers feed it:
+    - Publishing an announcement now notifies every relevant user (respecting its
+      `target_role`), linking back to `announcements.html` — this is the concrete answer to
+      "users should be able to open announcements and see."
+    - A learner is notified the moment their essay/short-answer submission gets graded,
+      linking to `results.html`.
 
-        function getStatusText(percentage, passingMark) {
-            if (!percentage && percentage !== 0) return 'Not Submitted';
-            if (percentage >= 80) return '🌟 Excellent';
-            if (percentage >= passingMark) return '✅ Passed';
-            return '❌ Failed';
-        }
+21. **The schema script would fail on a second run — "policy already exists."** The 4
+    storage policies for the `resources` bucket weren't guarded by `DROP POLICY IF EXISTS`,
+    unlike everything else in the script (which drops and recreates its own tables via
+    `CASCADE`, so it's naturally safe to re-run). Since `storage.objects` is a Supabase-
+    managed table the script never drops, running the script a second time — even after a
+    first run that failed partway through — hit that same "already exists" error at the same
+    spot every time. **Fixed properly, not just patched:** every single `CREATE POLICY` (74)
+    and `CREATE TRIGGER` (16) in the script is now preceded by a matching
+    `DROP POLICY/TRIGGER IF EXISTS`, so the entire script is safe to run over an existing
+    database, a partially-failed run, or a clean one — every time, no manual cleanup needed.
 
-        // ============================================
-        // RENDER TABLE
-        // ============================================
-        function renderTable() {
-            const tbody = document.getElementById('results-table-body');
-            
-            if (!filteredResults || filteredResults.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                            <i class="fas fa-inbox text-4xl block mb-2"></i>
-                            No results found
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(startIndex + itemsPerPage, filteredResults.length);
-            const pageItems = filteredResults.slice(startIndex, endIndex);
-            
-            tbody.innerHTML = pageItems.map((result, index) => {
-                const assessment = result.assessments;
-                const subject = assessment?.subjects;
-                const rowNum = startIndex + index + 1;
-                const score = result.percentage || 0;
-                const grade = getGrade(score);
-                const passingMark = assessment?.passing_mark || 50;
-                const statusClass = getStatusClass(score, passingMark);
-                const statusText = getStatusText(score, passingMark);
-                
-                return `
-                    <tr>
-                        <td class="font-medium text-gray-900 dark:text-white">${rowNum}</td>
-                        <td>
-                            <div>
-                                <div class="font-medium text-gray-900 dark:text-white">${assessment?.title || 'N/A'}</div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">${assessment?.assessment_type?.toUpperCase() || ''}</div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="text-sm" style="color: ${subject?.color || '#2563EB'}">
-                                <i class="fas fa-book mr-1"></i> ${subject?.name || 'N/A'}
-                            </span>
-                        </td>
-                        <td>
-                            <div>
-                                <span class="font-bold text-gray-900 dark:text-white">${score.toFixed(1)}%</span>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">${result.total_score || 0}/${assessment?.total_marks || 0}</div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="status-badge ${getGradeClass(grade)}">${grade}</span>
-                        </td>
-                        <td>
-                            <span class="status-badge ${statusClass}">${statusText}</span>
-                        </td>
-                        <td>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">
-                                ${result.created_at ? new Date(result.created_at).toLocaleDateString() : 'N/A'}
-                            </div>
-                        </td>
-                        <td>
-                            <button onclick="viewResult('${result.id}')" 
-                                    class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition" title="View Details">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
+Everything else — your Bento-style layout, glassmorphism, dark mode, the subjects/enrollment
+flow — was already solid and is untouched other than the fixes above.
 
-        // ============================================
-        // PAGINATION
-        // ============================================
-        function updatePagination() {
-            const totalItems = filteredResults.length;
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            
-            document.getElementById('pagination-info').textContent = 
-                `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} - ${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems}`;
-            
-            document.getElementById('prev-page').disabled = currentPage <= 1;
-            document.getElementById('next-page').disabled = currentPage >= totalPages;
-            
-            const pageNumbers = document.getElementById('page-numbers');
-            pageNumbers.innerHTML = '';
-            
-            const maxVisible = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-            
-            if (endPage - startPage < maxVisible - 1) {
-                startPage = Math.max(1, endPage - maxVisible + 1);
-            }
-            
-            if (startPage > 1) {
-                const btn = createPageButton(1);
-                pageNumbers.appendChild(btn);
-                if (startPage > 2) {
-                    const dots = document.createElement('span');
-                    dots.textContent = '...';
-                    dots.className = 'px-2 text-gray-500';
-                    pageNumbers.appendChild(dots);
-                }
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const btn = createPageButton(i);
-                if (i === currentPage) {
-                    btn.className += ' active-page';
-                }
-                pageNumbers.appendChild(btn);
-            }
-            
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    const dots = document.createElement('span');
-                    dots.textContent = '...';
-                    dots.className = 'px-2 text-gray-500';
-                    pageNumbers.appendChild(dots);
-                }
-                const btn = createPageButton(totalPages);
-                pageNumbers.appendChild(btn);
-            }
-        }
-        
-        function createPageButton(page) {
-            const btn = document.createElement('button');
-            btn.textContent = page;
-            btn.className = 'px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition';
-            btn.onclick = () => goToPage(page);
-            return btn;
-        }
-        
-        function goToPage(page) {
-            const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
-            if (page < 1 || page > totalPages) return;
-            currentPage = page;
-            renderTable();
-            updatePagination();
-            document.getElementById('results-table-body').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        function previousPage() {
-            if (currentPage > 1) goToPage(currentPage - 1);
-        }
-        
-        function nextPage() {
-            const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
-            if (currentPage < totalPages) goToPage(currentPage + 1);
-        }
+---
 
-        // ============================================
-        // UPDATE STATS
-        // ============================================
-        function updateStats() {
-            const total = results.length;
-            const passed = results.filter(r => (r.percentage || 0) >= (r.assessments?.passing_mark || 50)).length;
-            const failed = results.filter(r => (r.percentage || 0) < (r.assessments?.passing_mark || 50) && r.percentage !== null).length;
-            const pending = results.filter(r => r.status === 'pending').length;
-            const best = results.length > 0 ? Math.max(...results.map(r => r.percentage || 0)) : 0;
-            
-            document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-passed').textContent = passed;
-            document.getElementById('stat-failed').textContent = failed;
-            document.getElementById('stat-pending').textContent = pending;
-            document.getElementById('stat-best').textContent = best.toFixed(0) + '%';
-        }
+## Setup (10 minutes)
 
-        // ============================================
-        // UPDATE OVERVIEW
-        // ============================================
-        function updateOverview() {
-            if (results.length === 0) {
-                document.getElementById('overall-grade').textContent = 'N/A';
-                document.getElementById('overall-score').textContent = 'N/A';
-                return;
-            }
-            
-            const avg = results.reduce((sum, r) => sum + (r.percentage || 0), 0) / results.length;
-            const grade = getGrade(avg);
-            
-            document.getElementById('overall-grade').textContent = grade;
-            document.getElementById('overall-score').textContent = avg.toFixed(0) + '%';
-        }
+### 1. Create/confirm your Supabase project
+You already have one configured in the code:
+`https://kfeqmjveemfacrmqrhzk.supabase.co`. If you want a fresh project instead, create one
+at supabase.com and update `SUPABASE_URL` / `SUPABASE_ANON_KEY` in every HTML file (search
+for `SUPABASE_URL` — it's the same two lines near the bottom of each page).
 
-        // ============================================
-        // RENDER CHARTS
-        // ============================================
-        function renderCharts() {
-            renderPerformanceChart();
-            renderSubjectChart();
-        }
+### 2. Run the schema
+Open **Supabase Dashboard → SQL Editor → New query**, paste the entire contents of
+`supabase-schema.sql`, and run it. It's safe to re-run any time — it drops and recreates
+everything, so **don't run it against a project with real data you want to keep.**
 
-        function renderPerformanceChart() {
-            const canvas = document.getElementById('performanceChart');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.parentElement.clientWidth || 600;
-            const height = 250;
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            ctx.clearRect(0, 0, width, height);
-            
-            if (results.length === 0) {
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '16px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('No data available', width/2, height/2);
-                return;
-            }
-            
-            // Sort by date
-            const sorted = [...results].sort((a, b) => 
-                new Date(a.created_at) - new Date(b.created_at)
-            );
-            
-            const data = sorted.map(r => Math.round(r.percentage || 0));
-            const labels = sorted.map(r => {
-                const date = new Date(r.created_at);
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            });
-            
-            const padding = 40;
-            const chartWidth = width - padding * 2;
-            const chartHeight = height - padding * 2;
-            const maxValue = 100;
-            
-            // Grid lines
-            ctx.strokeStyle = '#E5E7EB';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            for (let i = 0; i <= 4; i++) {
-                const y = padding + chartHeight - (i / 4) * chartHeight;
-                ctx.beginPath();
-                ctx.moveTo(padding, y);
-                ctx.lineTo(width - padding, y);
-                ctx.stroke();
-                
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '10px Inter, sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText(`${Math.round((i / 4) * maxValue)}%`, padding - 8, y + 3);
-            }
-            ctx.setLineDash([]);
-            
-            if (data.length === 0) {
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '14px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('No data available', width/2, height/2);
-                return;
-            }
-            
-            // Draw line
-            const step = chartWidth / (data.length - 1);
-            const points = data.map((value, index) => ({
-                x: padding + index * step,
-                y: padding + chartHeight - (value / maxValue) * chartHeight
-            }));
-            
-            // Area
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, padding + chartHeight);
-            points.forEach(p => ctx.lineTo(p.x, p.y));
-            ctx.lineTo(points[points.length - 1].x, padding + chartHeight);
-            ctx.closePath();
-            const gradient = ctx.createLinearGradient(0, padding, 0, padding + chartHeight);
-            gradient.addColorStop(0, 'rgba(37, 99, 235, 0.3)');
-            gradient.addColorStop(1, 'rgba(37, 99, 235, 0.02)');
-            ctx.fillStyle = gradient;
-            ctx.fill();
-            
-            // Line
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length; i++) {
-                const prev = points[i - 1];
-                const curr = points[i];
-                const cp1x = prev.x + (curr.x - prev.x) / 2;
-                const cp2x = curr.x - (curr.x - prev.x) / 2;
-                ctx.bezierCurveTo(cp1x, prev.y, cp2x, curr.y, curr.x, curr.y);
-            }
-            ctx.strokeStyle = '#2563EB';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // Points
-            points.forEach((p, i) => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 5, 0, 2 * Math.PI);
-                ctx.fillStyle = '#2563EB';
-                ctx.fill();
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Labels
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '10px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(labels[i] || '', p.x, padding + chartHeight + 18);
-            });
-        }
+### 3. Set your auth settings
+Go to **Authentication → Providers → Email**. For quick local testing, turn off "Confirm
+email" so new accounts can log in immediately. For a real deployment, leave confirmation on.
 
-        function renderSubjectChart() {
-            const canvas = document.getElementById('subjectChart');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.parentElement.clientWidth || 600;
-            const height = 250;
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            ctx.clearRect(0, 0, width, height);
-            
-            // Group by subject
-            const subjectData = {};
-            results.forEach(r => {
-                const subjectName = r.assessments?.subjects?.name || 'Unknown';
-                if (!subjectData[subjectName]) {
-                    subjectData[subjectName] = [];
-                }
-                subjectData[subjectName].push(r.percentage || 0);
-            });
-            
-            const subjects = Object.keys(subjectData);
-            
-            if (subjects.length === 0) {
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '16px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('No data available', width/2, height/2);
-                return;
-            }
-            
-            const averages = subjects.map(name => {
-                const scores = subjectData[name];
-                return scores.reduce((sum, s) => sum + s, 0) / scores.length;
-            });
-            
-            const padding = 40;
-            const chartWidth = width - padding * 2;
-            const chartHeight = height - padding * 2;
-            const maxValue = 100;
-            const barWidth = Math.min((chartWidth / subjects.length) * 0.6, 50);
-            const gap = (chartWidth - barWidth * subjects.length) / (subjects.length + 1);
-            
-            // Grid lines
-            ctx.strokeStyle = '#E5E7EB';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            for (let i = 0; i <= 4; i++) {
-                const y = padding + chartHeight - (i / 4) * chartHeight;
-                ctx.beginPath();
-                ctx.moveTo(padding, y);
-                ctx.lineTo(width - padding, y);
-                ctx.stroke();
-                
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '10px Inter, sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText(`${Math.round((i / 4) * maxValue)}%`, padding - 8, y + 3);
-            }
-            ctx.setLineDash([]);
-            
-            const colors = ['#2563EB', '#10B981', '#7C3AED', '#F59E0B', '#EF4444', '#8B5CF6'];
-            
-            subjects.forEach((name, index) => {
-                const x = padding + gap + index * (barWidth + gap);
-                const value = averages[index] || 0;
-                const barHeight = (value / maxValue) * chartHeight;
-                const y = padding + chartHeight - barHeight;
-                
-                const color = colors[index % colors.length];
-                
-                // Bar with gradient
-                const gradient = ctx.createLinearGradient(x, y, x, padding + chartHeight);
-                gradient.addColorStop(0, color);
-                gradient.addColorStop(1, color + '66');
-                
-                ctx.fillStyle = gradient;
-                ctx.shadowColor = color + '33';
-                ctx.shadowBlur = 10;
-                
-                // Rounded bar
-                const radius = 4;
-                ctx.beginPath();
-                ctx.moveTo(x + radius, y);
-                ctx.lineTo(x + barWidth - radius, y);
-                ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius);
-                ctx.lineTo(x + barWidth, padding + chartHeight);
-                ctx.lineTo(x, padding + chartHeight);
-                ctx.lineTo(x, y + radius);
-                ctx.quadraticCurveTo(x, y, x + radius, y);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                
-                // Value
-                ctx.fillStyle = '#1F2937';
-                ctx.font = 'bold 11px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(`${Math.round(value)}%`, x + barWidth / 2, y - 8);
-                
-                // Label
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '10px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                const label = name.length > 12 ? name.substring(0, 10) + '...' : name;
-                ctx.fillText(label, x + barWidth / 2, padding + chartHeight + 18);
-            });
-        }
+### 4. Register your first accounts
+Open `register.html` (or your deployed URL) and create:
+- One account with role **Administrator**
+- One account with role **Teacher**
+- One or more accounts with role **Learner**
 
-        // ============================================
-        // VIEW RESULT
-        // ============================================
-        function viewResult(resultId) {
-            const result = results.find(r => r.id === resultId);
-            if (!result) {
-                showToast('Result not found', 'error');
-                return;
-            }
-            
-            const assessment = result.assessments;
-            const subject = assessment?.subjects;
-            const teacher = result.profiles;
-            const score = result.percentage || 0;
-            const grade = getGrade(score);
-            const passingMark = assessment?.passing_mark || 50;
-            const statusClass = getStatusClass(score, passingMark);
-            const statusText = getStatusText(score, passingMark);
-            
-            const modalBody = document.getElementById('modal-body');
-            modalBody.innerHTML = `
-                <div class="space-y-6">
-                    <div class="flex flex-wrap gap-3">
-                        <span class="status-badge ${getGradeClass(grade)}">Grade ${grade}</span>
-                        <span class="status-badge ${statusClass}">${statusText}</span>
-                        <span class="text-sm px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                            ${assessment?.assessment_type?.toUpperCase() || 'Assessment'}
-                        </span>
-                        ${subject ? `<span class="text-sm px-3 py-1 rounded-full" style="background: ${subject.color || '#2563EB'}20; color: ${subject.color || '#2563EB'}">
-                            ${subject.name}
-                        </span>` : ''}
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">${assessment?.title || 'N/A'}</h3>
-                        ${assessment?.description ? `<p class="text-gray-600 dark:text-gray-400 mt-1">${assessment.description}</p>` : ''}
-                    </div>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Score</p>
-                            <p class="text-xl font-bold text-gray-900 dark:text-white">${score.toFixed(1)}%</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Marks</p>
-                            <p class="text-xl font-bold text-gray-900 dark:text-white">${result.total_score || 0}/${assessment?.total_marks || 0}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Passing Mark</p>
-                            <p class="text-xl font-bold text-gray-900 dark:text-white">${passingMark}%</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Teacher</p>
-                            <p class="text-xl font-bold text-gray-900 dark:text-white">${teacher?.first_name || 'N/A'} ${teacher?.last_name || ''}</p>
-                        </div>
-                    </div>
-                    
-                    ${result.feedback ? `
-                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">📝 Feedback</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">${result.feedback}</p>
-                        </div>
-                    ` : ''}
-                    
-                    ${result.teacher_comment ? `
-                        <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">💬 Teacher Comment</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">${result.teacher_comment}</p>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="grid grid-cols-2 gap-4 text-sm text-gray-500 dark:text-gray-400">
-                        <div>
-                            <span class="font-medium">Started:</span>
-                            ${result.started_at ? new Date(result.started_at).toLocaleString() : 'N/A'}
-                        </div>
-                        <div>
-                            <span class="font-medium">Submitted:</span>
-                            ${result.submitted_at ? new Date(result.submitted_at).toLocaleString() : 'N/A'}
-                        </div>
-                        <div>
-                            <span class="font-medium">Time Taken:</span>
-                            ${result.time_taken ? formatTime(result.time_taken) : 'N/A'}
-                        </div>
-                        <div>
-                            <span class="font-medium">Attempt:</span>
-                            ${result.attempt_number || 1}
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('modal-title').textContent = 'Result Details';
-            document.getElementById('result-modal').classList.add('active');
-        }
+Because self-service admin signup is a real security risk in production, consider removing
+the "Administrator" option from `register.html`'s role dropdown once you've created your own
+admin account, and promote future admins manually:
 
-        // ============================================
-        // FORMAT TIME
-        // ============================================
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}m ${secs}s`;
-        }
+```sql
+UPDATE public.profiles SET role = 'admin' WHERE email = 'you@example.com';
+```
 
-        // ============================================
-        // EXPORT REPORT
-        // ============================================
-        function exportReport() {
-            if (results.length === 0) {
-                showToast('No results to export', 'warning');
-                return;
-            }
-            
-            // Create CSV
-            let csv = 'Assessment,Subject,Score (%),Grade,Status,Date\n';
-            results.forEach(r => {
-                const assessment = r.assessments;
-                const subject = assessment?.subjects;
-                const score = (r.percentage || 0).toFixed(1);
-                const grade = getGrade(r.percentage || 0);
-                const status = getStatusText(r.percentage || 0, assessment?.passing_mark || 50);
-                const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A';
-                csv += `"${assessment?.title || 'N/A'}","${subject?.name || 'N/A'}",${score},"${grade}","${status}","${date}"\n`;
-            });
-            
-            // Download
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `CastroEduConnect_Results_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            showToast('Report exported successfully! 📄', 'success');
-        }
+### 5. Assign the teacher to a subject
+The seed data creates 5 sample Grade 1 subjects with no teacher assigned. In **Table Editor →
+subjects**, set `teacher_id` to your teacher account's `id` (copy it from **Table Editor →
+profiles**) for any subject you want them to manage. Then, as the learner, go to
+`subjects.html` and enroll.
 
-        // ============================================
-        // REFRESH DATA
-        // ============================================
-        async function refreshData() {
-            showToast('Refreshing data...', 'info');
-            await loadData();
-            showToast('Data refreshed successfully! ✅', 'success');
-        }
+### 6. Enable "Add User" in the Admin Console (optional but recommended)
+This step deploys the Edge Function that lets admins create accounts directly from
+`admin.html`, instead of everyone having to self-register. Requires the
+[Supabase CLI](https://supabase.com/docs/guides/cli).
 
-        // ============================================
-        // CLOSE MODAL
-        // ============================================
-        function closeModal() {
-            document.getElementById('result-modal').classList.remove('active');
-        }
+```bash
+supabase login
+supabase link --project-ref kfeqmjveemfacrmqrhzk   # or your own project ref
+supabase functions deploy admin-create-user
+```
 
-        // ============================================
-        // DARK MODE
-        // ============================================
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const isDark = html.classList.toggle('dark');
-            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
-            updateDarkModeIcon(isDark);
-        }
+Your function's URL will be:
+`https://<your-project-ref>.functions.supabase.co/admin-create-user`
 
-        function updateDarkModeIcon(isDark) {
-            const icon = document.getElementById('dark-mode-icon');
-            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        }
+Open `admin.html`, find this line near the top of the script:
+```js
+const ADMIN_CREATE_USER_URL = '';
+```
+and paste your URL in. Until you do this, the Add User button shows a clear warning instead
+of failing silently — everything else in the Admin Console works without it.
 
-        function initDarkMode() {
-            const saved = localStorage.getItem('darkMode');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const isDark = saved ? saved === 'true' : prefersDark;
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-                updateDarkModeIcon(true);
-            }
-        }
+### 7. Open the app
+Just open `index.html` in a browser, or deploy the whole folder (see below) — there's no
+build step, it's static HTML/CSS/JS talking straight to Supabase.
 
-        // ============================================
-        // CLOSE MODAL ON OVERLAY CLICK
-        // ============================================
-        document.getElementById('result-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
+---
 
-        // ============================================
-        // KEYBOARD SHORTCUTS
-        // ============================================
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
+## Deploying
 
-        // ============================================
-        // WINDOW RESIZE HANDLER
-        // ============================================
-        let resizeTimeout;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                renderCharts();
-            }, 500);
-        });
+Any static host works (GitHub Pages, Netlify, Vercel, Cloudflare Pages). For GitHub Pages:
 
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        (async function init() {
-            console.log('🚀 CastroEduConnect Results Page Loading...');
-            
-            // Init dark mode
-            initDarkMode();
-            
-            // Setup dark mode toggle
-            document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
-            
-            // Check authentication
-            const isAuth = await checkAuth();
-            
-            if (!isAuth) {
-                console.log('❌ Not authenticated, redirecting...');
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            console.log('✅ Results page initialized successfully');
-        })();
-    
-        // ============================================
-        // NOTIFICATIONS (shared across pages)
-        // ============================================
-        let notifDropdownOpen = false;
-        function toggleNotifDropdown() {
-            notifDropdownOpen = !notifDropdownOpen;
-            const dd = document.getElementById('notif-dropdown');
-            if (dd) dd.classList.toggle('hidden', !notifDropdownOpen);
-            if (notifDropdownOpen) loadNotifications();
-        }
-        document.addEventListener('click', (e) => {
-            const wrapper = document.getElementById('notif-wrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
-                document.getElementById('notif-dropdown')?.classList.add('hidden');
-                notifDropdownOpen = false;
-            }
-        });
-        function escNotif(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
-        function notifTimeAgo(dateStr) {
-            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
-            if (diff < 60) return 'Just now';
-            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
-            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-            return `${Math.floor(diff/86400)}d ago`;
-        }
-        async function refreshNotifBadge() {
-            try {
-                const { count } = await supabaseClient.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
-                const badge = document.getElementById('notif-badge');
-                if (!badge) return;
-                if (count && count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.remove('hidden'); }
-                else { badge.classList.add('hidden'); }
-            } catch (e) { console.error('notif badge error', e); }
-        }
-        async function loadNotifications() {
-            const list = document.getElementById('notif-list');
-            if (!list) return;
-            try {
-                const { data, error } = await supabaseClient.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(15);
-                if (error) throw error;
-                if (!data || !data.length) { list.innerHTML = '<p class="p-4 text-sm text-gray-400">No notifications yet.</p>'; return; }
-                list.innerHTML = data.map(n => `
-                    <a href="${n.link || '#'}" onclick="markNotifRead('${n.id}')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${!n.is_read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">${escNotif(n.title)}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${escNotif(n.message)}</p>
-                        <p class="text-xs text-gray-400 mt-1">${notifTimeAgo(n.created_at)}</p>
-                    </a>`).join('');
-            } catch (e) {
-                console.error(e);
-                list.innerHTML = '<p class="p-4 text-sm text-red-500">Could not load notifications.</p>';
-            }
-        }
-        async function markNotifRead(id) {
-            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
-            refreshNotifBadge();
-        }
-        async function markAllNotifsRead() {
-            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('user_id', currentUser.id).eq('is_read', false);
-            await loadNotifications();
-            refreshNotifBadge();
-        }
+```bash
+git init
+git add .
+git commit -m "CastroEduConnect"
+git branch -M main
+git remote add origin https://github.com/<you>/castroeduconnect.git
+git push -u origin main
+```
 
-</script>
-</body>
-</html>
+Then in the repo: **Settings → Pages → Deploy from branch → main → / (root)**.
+
+---
+
+## Project structure
+
+```
+├── index.html              Public landing page
+├── login.html               Supabase email/password login
+├── register.html            Sign up (learner/teacher/admin)
+├── forgot-password.html     Password reset request
+├── dashboard.html            Role-aware dashboard with live stats
+├── subjects.html             Browse/enroll in subjects
+├── subject-detail.html         Moodle-style course page: topics, notes, resources (new)
+├── assignments.html          Assignment list, attempt flow, auto-marking
+├── assessments.html          Quiz/CAT/exam builder & attempt flow
+├── results.html              Grades & performance
+├── resources.html            Learning materials, likes & comments
+├── announcements.html        School-wide announcements (now live)
+├── discussions.html           Per-subject discussion forum (new)
+├── admin.html                  Admin console: users, grades, classes, subjects (new)
+├── profile.html              Your profile, editable (now live)
+├── settings.html             Preferences & account (now live)
+├── script.js                  Shared toast/skeleton/format helpers
+├── style.css                   Global styles, dark mode, animations
+├── logo.png                     Your brand mark (not yet wired into the UI —
+│                                 swap it in for the icon div in each page's
+│                                 nav/sidebar if you want it on screen)
+├── supabase-schema.sql        Full database schema — fixed & extended
+└── supabase/functions/
+    └── admin-create-user/       Edge Function powering admin.html's Add User button
+        └── index.ts
+```
+
+## Known limitations / good next steps
+
+- **Self-registration allows picking "Administrator"** — fine for a demo, but restrict this
+  before going live (see step 4 above).
+- The account-deletion flow logs a request for an admin to action, rather than deleting
+  immediately — deleting a user's own `auth.users` row requires a service-role key, which
+  can't safely live in client-side code.
+- Storage RLS lets any authenticated user upload to the `resources` bucket path they choose;
+  if you want to lock uploads to teachers/admins only, tighten the
+  `resources_bucket_authenticated_upload` policy in `supabase-schema.sql` to check the
+  uploader's role.
+- `editAssignment()` in `assessments.html` is still a "coming soon" stub — creating and
+  deleting assignments/assessments works end-to-end, editing an existing one after creation
+  doesn't yet.
+- The role-based access audit this round focused on the pages you flagged as broken
+  (resources, assignments, assessments, results) plus the new admin/discussions/course pages.
+  I haven't done a line-by-line pass on every remaining page (e.g. `subjects.html`'s own
+  create/edit flows) — if something looks off there too, flag it and I'll dig in the same way.
+- Class admission currently updates `profiles.class_id`/`grade_id` and inserts into
+  `class_enrollments`; it doesn't yet touch `subject_enrollments` automatically. A learner
+  admitted to a class still needs to enroll in that class's subjects themselves via
+  `subjects.html` (or you can extend the admin flow to auto-enroll them in every subject tied
+  to that class/grade).

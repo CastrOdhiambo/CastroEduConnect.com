@@ -495,45 +495,68 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ---------------- PROFILES ----------------
+DROP POLICY IF EXISTS "profiles_select_all" ON public.profiles;
 CREATE POLICY "profiles_select_all" ON public.profiles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+DROP POLICY IF EXISTS "profiles_update_admin" ON public.profiles;
 CREATE POLICY "profiles_update_admin" ON public.profiles FOR UPDATE USING (public.is_admin());
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
 CREATE POLICY "profiles_insert_own" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+DROP POLICY IF EXISTS "profiles_delete_admin" ON public.profiles;
 CREATE POLICY "profiles_delete_admin" ON public.profiles FOR DELETE USING (public.is_admin());
 
 -- ---------------- GRADES ----------------
+DROP POLICY IF EXISTS "grades_select_all" ON public.grades;
 CREATE POLICY "grades_select_all" ON public.grades FOR SELECT USING (true);
+DROP POLICY IF EXISTS "grades_write_admin" ON public.grades;
 CREATE POLICY "grades_write_admin" ON public.grades FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ---------------- CLASSES ----------------
+DROP POLICY IF EXISTS "classes_select_all" ON public.classes;
 CREATE POLICY "classes_select_all" ON public.classes FOR SELECT USING (true);
+DROP POLICY IF EXISTS "classes_write_admin" ON public.classes;
 CREATE POLICY "classes_write_admin" ON public.classes FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ---------------- CLASS ENROLLMENTS ----------------
+DROP POLICY IF EXISTS "class_enrollments_select_all" ON public.class_enrollments;
 CREATE POLICY "class_enrollments_select_all" ON public.class_enrollments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "class_enrollments_insert_own" ON public.class_enrollments;
 CREATE POLICY "class_enrollments_insert_own" ON public.class_enrollments FOR INSERT WITH CHECK (auth.uid() = learner_id OR public.is_admin());
+DROP POLICY IF EXISTS "class_enrollments_manage_admin" ON public.class_enrollments;
 CREATE POLICY "class_enrollments_manage_admin" ON public.class_enrollments FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ---------------- SUBJECTS ----------------
+DROP POLICY IF EXISTS "subjects_select_all" ON public.subjects;
 CREATE POLICY "subjects_select_all" ON public.subjects FOR SELECT USING (true);
+DROP POLICY IF EXISTS "subjects_insert_staff" ON public.subjects;
 CREATE POLICY "subjects_insert_staff" ON public.subjects FOR INSERT WITH CHECK (public.is_admin() OR public.is_teacher());
+DROP POLICY IF EXISTS "subjects_update_owner" ON public.subjects;
 CREATE POLICY "subjects_update_owner" ON public.subjects FOR UPDATE USING (auth.uid() = teacher_id OR public.is_admin());
+DROP POLICY IF EXISTS "subjects_delete_owner" ON public.subjects;
 CREATE POLICY "subjects_delete_owner" ON public.subjects FOR DELETE USING (auth.uid() = teacher_id OR public.is_admin());
 
 -- ---------------- SUBJECT ENROLLMENTS ----------------
+DROP POLICY IF EXISTS "subject_enrollments_select_all" ON public.subject_enrollments;
 CREATE POLICY "subject_enrollments_select_all" ON public.subject_enrollments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "subject_enrollments_insert_own" ON public.subject_enrollments;
 CREATE POLICY "subject_enrollments_insert_own" ON public.subject_enrollments FOR INSERT WITH CHECK (auth.uid() = learner_id OR public.is_admin());
+DROP POLICY IF EXISTS "subject_enrollments_delete_own" ON public.subject_enrollments;
 CREATE POLICY "subject_enrollments_delete_own" ON public.subject_enrollments FOR DELETE USING (auth.uid() = learner_id OR public.is_admin());
 
 -- ---------------- TOPICS / SUB-TOPICS ----------------
+DROP POLICY IF EXISTS "topics_select_all" ON public.topics;
 CREATE POLICY "topics_select_all" ON public.topics FOR SELECT USING (true);
+DROP POLICY IF EXISTS "topics_write_staff" ON public.topics;
 CREATE POLICY "topics_write_staff" ON public.topics FOR ALL USING (
     public.is_admin() OR auth.uid() IN (SELECT teacher_id FROM public.subjects WHERE id = subject_id)
 ) WITH CHECK (
     public.is_admin() OR auth.uid() IN (SELECT teacher_id FROM public.subjects WHERE id = subject_id)
 );
 
+DROP POLICY IF EXISTS "subtopics_select_all" ON public.sub_topics;
 CREATE POLICY "subtopics_select_all" ON public.sub_topics FOR SELECT USING (true);
+DROP POLICY IF EXISTS "subtopics_write_staff" ON public.sub_topics;
 CREATE POLICY "subtopics_write_staff" ON public.sub_topics FOR ALL USING (
     public.is_admin() OR auth.uid() IN (
         SELECT s.teacher_id FROM public.subjects s JOIN public.topics t ON t.subject_id = s.id WHERE t.id = topic_id
@@ -545,17 +568,25 @@ CREATE POLICY "subtopics_write_staff" ON public.sub_topics FOR ALL USING (
 );
 
 -- ---------------- ASSESSMENTS ----------------
+DROP POLICY IF EXISTS "assessments_select_all" ON public.assessments;
 CREATE POLICY "assessments_select_all" ON public.assessments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "assessments_insert_staff" ON public.assessments;
 CREATE POLICY "assessments_insert_staff" ON public.assessments FOR INSERT WITH CHECK (auth.uid() = teacher_id OR public.is_admin());
+DROP POLICY IF EXISTS "assessments_update_owner" ON public.assessments;
 CREATE POLICY "assessments_update_owner" ON public.assessments FOR UPDATE USING (auth.uid() = teacher_id OR public.is_admin());
+DROP POLICY IF EXISTS "assessments_delete_owner" ON public.assessments;
 CREATE POLICY "assessments_delete_owner" ON public.assessments FOR DELETE USING (auth.uid() = teacher_id OR public.is_admin());
 
 -- ---------------- QUESTION BANK ----------------
+DROP POLICY IF EXISTS "question_bank_select_all" ON public.question_bank;
 CREATE POLICY "question_bank_select_all" ON public.question_bank FOR SELECT USING (true);
+DROP POLICY IF EXISTS "question_bank_write_owner" ON public.question_bank;
 CREATE POLICY "question_bank_write_owner" ON public.question_bank FOR ALL USING (auth.uid() = teacher_id OR public.is_admin()) WITH CHECK (auth.uid() = teacher_id OR public.is_admin());
 
 -- ---------------- QUESTIONS ----------------
+DROP POLICY IF EXISTS "questions_select_all" ON public.questions;
 CREATE POLICY "questions_select_all" ON public.questions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "questions_write_owner" ON public.questions;
 CREATE POLICY "questions_write_owner" ON public.questions FOR ALL USING (
     public.is_admin() OR auth.uid() IN (SELECT teacher_id FROM public.assessments WHERE id = assessment_id)
 ) WITH CHECK (
@@ -563,7 +594,9 @@ CREATE POLICY "questions_write_owner" ON public.questions FOR ALL USING (
 );
 
 -- ---------------- CHOICES ----------------
+DROP POLICY IF EXISTS "choices_select_all" ON public.choices;
 CREATE POLICY "choices_select_all" ON public.choices FOR SELECT USING (true);
+DROP POLICY IF EXISTS "choices_write_owner" ON public.choices;
 CREATE POLICY "choices_write_owner" ON public.choices FOR ALL USING (
     public.is_admin() OR auth.uid() IN (
         SELECT a.teacher_id FROM public.assessments a JOIN public.questions q ON q.assessment_id = a.id WHERE q.id = question_id
@@ -575,7 +608,9 @@ CREATE POLICY "choices_write_owner" ON public.choices FOR ALL USING (
 );
 
 -- ---------------- MATCHING PAIRS ----------------
+DROP POLICY IF EXISTS "matching_pairs_select_all" ON public.matching_pairs;
 CREATE POLICY "matching_pairs_select_all" ON public.matching_pairs FOR SELECT USING (true);
+DROP POLICY IF EXISTS "matching_pairs_write_owner" ON public.matching_pairs;
 CREATE POLICY "matching_pairs_write_owner" ON public.matching_pairs FOR ALL USING (
     public.is_admin() OR auth.uid() IN (
         SELECT a.teacher_id FROM public.assessments a JOIN public.questions q ON q.assessment_id = a.id WHERE q.id = question_id
@@ -587,18 +622,23 @@ CREATE POLICY "matching_pairs_write_owner" ON public.matching_pairs FOR ALL USIN
 );
 
 -- ---------------- SUBMISSIONS ----------------
+DROP POLICY IF EXISTS "submissions_select_own_or_teacher" ON public.submissions;
 CREATE POLICY "submissions_select_own_or_teacher" ON public.submissions FOR SELECT USING (
     auth.uid() = learner_id
     OR public.is_admin()
     OR auth.uid() IN (SELECT teacher_id FROM public.assessments WHERE id = assessment_id)
 );
+DROP POLICY IF EXISTS "submissions_insert_own" ON public.submissions;
 CREATE POLICY "submissions_insert_own" ON public.submissions FOR INSERT WITH CHECK (auth.uid() = learner_id);
+DROP POLICY IF EXISTS "submissions_update_own" ON public.submissions;
 CREATE POLICY "submissions_update_own" ON public.submissions FOR UPDATE USING (auth.uid() = learner_id);
+DROP POLICY IF EXISTS "submissions_update_teacher" ON public.submissions;
 CREATE POLICY "submissions_update_teacher" ON public.submissions FOR UPDATE USING (
     public.is_admin() OR auth.uid() IN (SELECT teacher_id FROM public.assessments WHERE id = assessment_id)
 );
 
 -- ---------------- ANSWERS ----------------
+DROP POLICY IF EXISTS "answers_select_own_or_teacher" ON public.answers;
 CREATE POLICY "answers_select_own_or_teacher" ON public.answers FOR SELECT USING (
     public.is_admin()
     OR auth.uid() IN (SELECT learner_id FROM public.submissions WHERE id = submission_id)
@@ -606,9 +646,11 @@ CREATE POLICY "answers_select_own_or_teacher" ON public.answers FOR SELECT USING
         SELECT a.teacher_id FROM public.assessments a JOIN public.submissions s ON s.assessment_id = a.id WHERE s.id = submission_id
     )
 );
+DROP POLICY IF EXISTS "answers_insert_own" ON public.answers;
 CREATE POLICY "answers_insert_own" ON public.answers FOR INSERT WITH CHECK (
     auth.uid() IN (SELECT learner_id FROM public.submissions WHERE id = submission_id)
 );
+DROP POLICY IF EXISTS "answers_update_teacher_or_own" ON public.answers;
 CREATE POLICY "answers_update_teacher_or_own" ON public.answers FOR UPDATE USING (
     public.is_admin()
     OR auth.uid() IN (SELECT learner_id FROM public.submissions WHERE id = submission_id)
@@ -618,48 +660,76 @@ CREATE POLICY "answers_update_teacher_or_own" ON public.answers FOR UPDATE USING
 );
 
 -- ---------------- RESOURCES ----------------
+DROP POLICY IF EXISTS "resources_select_all" ON public.resources;
 CREATE POLICY "resources_select_all" ON public.resources FOR SELECT USING (true);
+DROP POLICY IF EXISTS "resources_insert_staff" ON public.resources;
 CREATE POLICY "resources_insert_staff" ON public.resources FOR INSERT WITH CHECK (auth.uid() = teacher_id OR public.is_admin());
+DROP POLICY IF EXISTS "resources_update_owner" ON public.resources;
 CREATE POLICY "resources_update_owner" ON public.resources FOR UPDATE USING (auth.uid() = teacher_id OR public.is_admin());
+DROP POLICY IF EXISTS "resources_delete_owner" ON public.resources;
 CREATE POLICY "resources_delete_owner" ON public.resources FOR DELETE USING (auth.uid() = teacher_id OR public.is_admin());
 
+DROP POLICY IF EXISTS "resource_bookmarks_select_own" ON public.resource_bookmarks;
 CREATE POLICY "resource_bookmarks_select_own" ON public.resource_bookmarks FOR SELECT USING (auth.uid() = learner_id);
+DROP POLICY IF EXISTS "resource_bookmarks_manage_own" ON public.resource_bookmarks;
 CREATE POLICY "resource_bookmarks_manage_own" ON public.resource_bookmarks FOR ALL USING (auth.uid() = learner_id) WITH CHECK (auth.uid() = learner_id);
 
+DROP POLICY IF EXISTS "resource_likes_select_all" ON public.resource_likes;
 CREATE POLICY "resource_likes_select_all" ON public.resource_likes FOR SELECT USING (true);
+DROP POLICY IF EXISTS "resource_likes_manage_own" ON public.resource_likes;
 CREATE POLICY "resource_likes_manage_own" ON public.resource_likes FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "resource_comments_select_all" ON public.resource_comments;
 CREATE POLICY "resource_comments_select_all" ON public.resource_comments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "resource_comments_insert_own" ON public.resource_comments;
 CREATE POLICY "resource_comments_insert_own" ON public.resource_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "resource_comments_manage_own" ON public.resource_comments;
 CREATE POLICY "resource_comments_manage_own" ON public.resource_comments FOR DELETE USING (auth.uid() = user_id OR public.is_admin());
 
 -- ---------------- DISCUSSIONS ----------------
+DROP POLICY IF EXISTS "discussions_select_all" ON public.discussions;
 CREATE POLICY "discussions_select_all" ON public.discussions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "discussions_insert_auth" ON public.discussions;
 CREATE POLICY "discussions_insert_auth" ON public.discussions FOR INSERT WITH CHECK (auth.uid() = author_id);
+DROP POLICY IF EXISTS "discussions_update_owner" ON public.discussions;
 CREATE POLICY "discussions_update_owner" ON public.discussions FOR UPDATE USING (auth.uid() = author_id OR public.is_admin() OR public.is_teacher());
+DROP POLICY IF EXISTS "discussions_delete_owner" ON public.discussions;
 CREATE POLICY "discussions_delete_owner" ON public.discussions FOR DELETE USING (auth.uid() = author_id OR public.is_admin());
 
+DROP POLICY IF EXISTS "discussion_comments_select_all" ON public.discussion_comments;
 CREATE POLICY "discussion_comments_select_all" ON public.discussion_comments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "discussion_comments_insert_auth" ON public.discussion_comments;
 CREATE POLICY "discussion_comments_insert_auth" ON public.discussion_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "discussion_comments_update_owner" ON public.discussion_comments;
 CREATE POLICY "discussion_comments_update_owner" ON public.discussion_comments FOR UPDATE USING (auth.uid() = user_id OR public.is_admin() OR public.is_teacher());
+DROP POLICY IF EXISTS "discussion_comments_delete_owner" ON public.discussion_comments;
 CREATE POLICY "discussion_comments_delete_owner" ON public.discussion_comments FOR DELETE USING (auth.uid() = user_id OR public.is_admin());
 
 -- ---------------- ANNOUNCEMENTS ----------------
+DROP POLICY IF EXISTS "announcements_select_all" ON public.announcements;
 CREATE POLICY "announcements_select_all" ON public.announcements FOR SELECT USING (true);
+DROP POLICY IF EXISTS "announcements_write_staff" ON public.announcements;
 CREATE POLICY "announcements_write_staff" ON public.announcements FOR ALL USING (public.is_admin() OR public.is_teacher()) WITH CHECK (public.is_admin() OR public.is_teacher());
 
 -- ---------------- NOTIFICATIONS ----------------
+DROP POLICY IF EXISTS "notifications_manage_own" ON public.notifications;
 CREATE POLICY "notifications_manage_own" ON public.notifications FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 -- ---------------- LOGS / SETTINGS / ANALYTICS (admin only) ----------------
+DROP POLICY IF EXISTS "activity_logs_select_admin" ON public.activity_logs;
 CREATE POLICY "activity_logs_select_admin" ON public.activity_logs FOR SELECT USING (public.is_admin());
+DROP POLICY IF EXISTS "activity_logs_insert_own" ON public.activity_logs;
 CREATE POLICY "activity_logs_insert_own" ON public.activity_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "audit_logs_admin_only" ON public.audit_logs;
 CREATE POLICY "audit_logs_admin_only" ON public.audit_logs FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS "system_settings_select_public" ON public.system_settings;
 CREATE POLICY "system_settings_select_public" ON public.system_settings FOR SELECT USING (is_public = true OR public.is_admin());
+DROP POLICY IF EXISTS "system_settings_write_admin" ON public.system_settings;
 CREATE POLICY "system_settings_write_admin" ON public.system_settings FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
+DROP POLICY IF EXISTS "analytics_daily_admin_only" ON public.analytics_daily;
 CREATE POLICY "analytics_daily_admin_only" ON public.analytics_daily FOR ALL USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- ============================================================
@@ -699,16 +769,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_subjects_updated_at ON public.subjects;
 CREATE TRIGGER update_subjects_updated_at BEFORE UPDATE ON public.subjects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_assessments_updated_at ON public.assessments;
 CREATE TRIGGER update_assessments_updated_at BEFORE UPDATE ON public.assessments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_submissions_updated_at ON public.submissions;
 CREATE TRIGGER update_submissions_updated_at BEFORE UPDATE ON public.submissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_answers_updated_at ON public.answers;
 CREATE TRIGGER update_answers_updated_at BEFORE UPDATE ON public.answers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_resources_updated_at ON public.resources;
 CREATE TRIGGER update_resources_updated_at BEFORE UPDATE ON public.resources FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_announcements_updated_at ON public.announcements;
 CREATE TRIGGER update_announcements_updated_at BEFORE UPDATE ON public.announcements FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_topics_updated_at ON public.topics;
 CREATE TRIGGER update_topics_updated_at BEFORE UPDATE ON public.topics FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_subtopics_updated_at ON public.sub_topics;
 CREATE TRIGGER update_subtopics_updated_at BEFORE UPDATE ON public.sub_topics FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_discussions_updated_at ON public.discussions;
 CREATE TRIGGER update_discussions_updated_at BEFORE UPDATE ON public.discussions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_discussion_comments_updated_at ON public.discussion_comments;
 CREATE TRIGGER update_discussion_comments_updated_at BEFORE UPDATE ON public.discussion_comments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Auto-create profile on signup — reads first_name/last_name/role from signUp() metadata.
@@ -756,7 +837,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_resource_like_insert ON public.resource_likes;
 CREATE TRIGGER trg_resource_like_insert AFTER INSERT ON public.resource_likes FOR EACH ROW EXECUTE FUNCTION sync_resource_like_count();
+DROP TRIGGER IF EXISTS trg_resource_like_delete ON public.resource_likes;
 CREATE TRIGGER trg_resource_like_delete AFTER DELETE ON public.resource_likes FOR EACH ROW EXECUTE FUNCTION sync_resource_like_count();
 
 -- ============================================================
@@ -766,15 +849,19 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('resources', 'resources', true)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "resources_bucket_public_read" ON storage.objects;
 CREATE POLICY "resources_bucket_public_read" ON storage.objects
     FOR SELECT USING (bucket_id = 'resources');
 
+DROP POLICY IF EXISTS "resources_bucket_authenticated_upload" ON storage.objects;
 CREATE POLICY "resources_bucket_authenticated_upload" ON storage.objects
     FOR INSERT WITH CHECK (bucket_id = 'resources' AND auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "resources_bucket_owner_update" ON storage.objects;
 CREATE POLICY "resources_bucket_owner_update" ON storage.objects
     FOR UPDATE USING (bucket_id = 'resources' AND auth.uid() = owner);
 
+DROP POLICY IF EXISTS "resources_bucket_owner_delete" ON storage.objects;
 CREATE POLICY "resources_bucket_owner_delete" ON storage.objects
     FOR DELETE USING (bucket_id = 'resources' AND auth.uid() = owner);
 
@@ -798,6 +885,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_notify_on_announcement ON public.announcements;
 CREATE TRIGGER trg_notify_on_announcement
 AFTER INSERT ON public.announcements
 FOR EACH ROW EXECUTE FUNCTION notify_users_on_announcement();
@@ -818,6 +906,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_notify_on_submission_graded ON public.submissions;
 CREATE TRIGGER trg_notify_on_submission_graded
 AFTER UPDATE ON public.submissions
 FOR EACH ROW EXECUTE FUNCTION notify_on_submission_graded();
