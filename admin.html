@@ -51,6 +51,19 @@
                 <div class="flex-1 max-w-xl mx-4"></div>
                 <div class="flex items-center space-x-4">
                     <button id="dark-mode-toggle" class="text-gray-600 dark:text-gray-300 text-xl"><i id="dark-mode-icon" class="fas fa-moon"></i></button>
+                    <div class="relative" id="notif-wrapper">
+                        <button onclick="toggleNotifDropdown()" class="relative text-gray-600 dark:text-gray-300 hover:text-blue-600">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">0</span>
+                        </button>
+                        <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+                            <div class="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <span class="font-semibold text-gray-900 dark:text-white text-sm">Notifications</span>
+                                <button onclick="markAllNotifsRead()" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Mark all read</button>
+                            </div>
+                            <div id="notif-list" class="divide-y divide-gray-100 dark:divide-gray-700"><p class="p-4 text-sm text-gray-400">Loading...</p></div>
+                        </div>
+                    </div>
                     <div class="flex items-center space-x-3">
                         <div id="header-avatar" class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center text-white font-semibold">--</div>
                         <div class="hidden sm:block">
@@ -99,12 +112,15 @@
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input id="user-search" type="text" placeholder="Search users..." class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
                     </div>
-                    <select id="user-role-filter" class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                        <option value="">All roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="teacher">Teacher</option>
-                        <option value="learner">Learner</option>
-                    </select>
+                    <div class="flex items-center gap-3">
+                        <select id="user-role-filter" class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                            <option value="">All roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="learner">Learner</option>
+                        </select>
+                        <button onclick="openAddUserModal()" class="btn-primary px-5 py-2 rounded-xl text-white font-semibold text-sm"><i class="fas fa-user-plus mr-2"></i>Add User</button>
+                    </div>
                 </div>
                 <div class="dashboard-card overflow-x-auto">
                     <table class="admin-table">
@@ -163,11 +179,21 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
-                    <select id="user-modal-role" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <select id="user-modal-role" onchange="toggleUserModalGradeFields()" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="learner">Learner</option>
                         <option value="teacher">Teacher</option>
                         <option value="admin">Admin</option>
                     </select>
+                </div>
+                <div id="user-modal-grade-fields" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grade / Level</label>
+                        <select id="user-modal-grade" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="">Not assigned</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Class</label>
+                        <select id="user-modal-class" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="">Not assigned</option></select>
+                    </div>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-gray-900 dark:text-white font-medium">Active</span>
@@ -180,6 +206,40 @@
             <div class="flex gap-3 mt-6">
                 <button onclick="closeUserModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
                 <button onclick="saveUser()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User modal -->
+    <div id="add-user-modal" class="modal-overlay">
+        <div class="modal-content max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Add User</h3>
+            <div id="add-user-config-warning" class="hidden mb-4 p-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-300">
+                <i class="fas fa-triangle-exclamation mr-1"></i>
+                Set your Edge Function URL at the top of the script in <code>admin.html</code> before this will work — see the README.
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First Name</label><input id="add-user-first" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label><input id="add-user-last" type="text" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                </div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label><input id="add-user-email" type="email" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Temporary Password</label><input id="add-user-password" type="text" placeholder="At least 8 characters" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role</label>
+                    <select id="add-user-role" onchange="toggleAddUserGradeFields()" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="learner">Learner</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div id="add-user-grade-fields" class="space-y-4">
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Grade / Level</label><select id="add-user-grade" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="">Not assigned</option></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Class</label><select id="add-user-class" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"><option value="">Not assigned</option></select></div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeAddUserModal()" class="flex-1 bg-gray-200 dark:bg-gray-700 py-3 rounded-xl text-gray-700 dark:text-gray-300 font-semibold">Cancel</button>
+                <button onclick="submitAddUser()" class="flex-1 btn-primary py-3 rounded-xl text-white font-semibold">Create Account</button>
             </div>
         </div>
     </div>
@@ -274,6 +334,7 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { window.location.href = 'login.html'; return null; }
             currentUser = session.user;
+                refreshNotifBadge();
             const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
             if (error) { showToast('Could not load your profile', 'error'); return null; }
             userProfile = data;
@@ -359,6 +420,9 @@
         document.getElementById('user-role-filter').addEventListener('change', renderUsers);
 
         let editingUserId = null;
+        function toggleUserModalGradeFields() {
+            document.getElementById('user-modal-grade-fields').classList.toggle('hidden', document.getElementById('user-modal-role').value !== 'learner');
+        }
         function openUserModal(id) {
             const u = allUsers.find(x => x.id === id);
             if (!u) return;
@@ -366,26 +430,94 @@
             document.getElementById('user-modal-name').textContent = `${u.first_name} ${u.last_name} (${u.email})`;
             document.getElementById('user-modal-role').value = u.role;
             document.getElementById('user-modal-active').checked = u.is_active !== false;
+            document.getElementById('user-modal-grade').innerHTML = '<option value="">Not assigned</option>' + allGrades.map(g => `<option value="${g.id}" ${g.id === u.grade_id ? 'selected' : ''}>${escapeHtml(g.name)}</option>`).join('');
+            document.getElementById('user-modal-class').innerHTML = '<option value="">Not assigned</option>' + allClasses.map(c => `<option value="${c.id}" ${c.id === u.class_id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+            toggleUserModalGradeFields();
             document.getElementById('user-modal').classList.add('active');
         }
         function closeUserModal() { document.getElementById('user-modal').classList.remove('active'); editingUserId = null; }
         async function saveUser() {
             if (!editingUserId) return;
-            if (editingUserId === currentUser.id) {
-                const newRole = document.getElementById('user-modal-role').value;
-                if (newRole !== 'admin') { showToast("You can't demote your own account from here", 'warning'); return; }
+            const role = document.getElementById('user-modal-role').value;
+            if (editingUserId === currentUser.id && role !== 'admin') {
+                showToast("You can't demote your own account from here", 'warning'); return;
             }
+            const gradeId = document.getElementById('user-modal-grade').value || null;
+            const classId = document.getElementById('user-modal-class').value || null;
             try {
                 const { error } = await supabaseClient.from('profiles').update({
-                    role: document.getElementById('user-modal-role').value,
-                    is_active: document.getElementById('user-modal-active').checked
+                    role,
+                    is_active: document.getElementById('user-modal-active').checked,
+                    grade_id: role === 'learner' ? gradeId : null,
+                    class_id: role === 'learner' ? classId : null
                 }).eq('id', editingUserId);
                 if (error) throw error;
+
+                if (role === 'learner' && classId) {
+                    await supabaseClient.from('class_enrollments').upsert(
+                        [{ class_id: classId, learner_id: editingUserId, status: 'active' }],
+                        { onConflict: 'class_id,learner_id' }
+                    );
+                }
                 showToast('User updated', 'success');
                 closeUserModal();
                 await loadUsers();
             } catch (e) {
                 showToast('Could not update: ' + e.message, 'error');
+            }
+        }
+
+        // ---------------- ADD USER (via Edge Function) ----------------
+        // Set this to your project's Edge Function URL after deploying it, e.g.
+        // 'https://kfeqmjveemfacrmqrhzk.functions.supabase.co/admin-create-user'
+        const ADMIN_CREATE_USER_URL = '';
+
+        function toggleAddUserGradeFields() {
+            document.getElementById('add-user-grade-fields').classList.toggle('hidden', document.getElementById('add-user-role').value !== 'learner');
+        }
+        function openAddUserModal() {
+            document.getElementById('add-user-first').value = '';
+            document.getElementById('add-user-last').value = '';
+            document.getElementById('add-user-email').value = '';
+            document.getElementById('add-user-password').value = '';
+            document.getElementById('add-user-role').value = 'learner';
+            document.getElementById('add-user-grade').innerHTML = '<option value="">Not assigned</option>' + allGrades.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+            document.getElementById('add-user-class').innerHTML = '<option value="">Not assigned</option>' + allClasses.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+            toggleAddUserGradeFields();
+            document.getElementById('add-user-config-warning').classList.toggle('hidden', !!ADMIN_CREATE_USER_URL);
+            document.getElementById('add-user-modal').classList.add('active');
+        }
+        function closeAddUserModal() { document.getElementById('add-user-modal').classList.remove('active'); }
+        async function submitAddUser() {
+            const first_name = document.getElementById('add-user-first').value.trim();
+            const last_name = document.getElementById('add-user-last').value.trim();
+            const email = document.getElementById('add-user-email').value.trim();
+            const password = document.getElementById('add-user-password').value;
+            const role = document.getElementById('add-user-role').value;
+            const grade_id = document.getElementById('add-user-grade').value || null;
+            const class_id = document.getElementById('add-user-class').value || null;
+
+            if (!first_name || !last_name || !email || !password) { showToast('Please fill in all fields', 'error'); return; }
+            if (password.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+            if (!ADMIN_CREATE_USER_URL) { showToast('Edge Function URL not configured yet — see README', 'error'); return; }
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                const res = await fetch(ADMIN_CREATE_USER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ email, password, first_name, last_name, role, grade_id, class_id })
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.error || 'Could not create user');
+                showToast(`Account created for ${first_name} ${last_name}`, 'success');
+                closeAddUserModal();
+                await loadUsers();
+            } catch (e) {
+                showToast('Could not create user: ' + e.message, 'error');
             }
         }
 
@@ -598,6 +730,69 @@
             await Promise.all([loadOverview(), loadUsers(), loadGrades()]);
             await Promise.all([loadClasses(), loadSubjects()]);
         })();
-    </script>
+    
+        // ============================================
+        // NOTIFICATIONS (shared across pages)
+        // ============================================
+        let notifDropdownOpen = false;
+        function toggleNotifDropdown() {
+            notifDropdownOpen = !notifDropdownOpen;
+            const dd = document.getElementById('notif-dropdown');
+            if (dd) dd.classList.toggle('hidden', !notifDropdownOpen);
+            if (notifDropdownOpen) loadNotifications();
+        }
+        document.addEventListener('click', (e) => {
+            const wrapper = document.getElementById('notif-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('notif-dropdown')?.classList.add('hidden');
+                notifDropdownOpen = false;
+            }
+        });
+        function escNotif(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+        function notifTimeAgo(dateStr) {
+            const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+            return `${Math.floor(diff/86400)}d ago`;
+        }
+        async function refreshNotifBadge() {
+            try {
+                const { count } = await supabaseClient.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('is_read', false);
+                const badge = document.getElementById('notif-badge');
+                if (!badge) return;
+                if (count && count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.classList.remove('hidden'); }
+                else { badge.classList.add('hidden'); }
+            } catch (e) { console.error('notif badge error', e); }
+        }
+        async function loadNotifications() {
+            const list = document.getElementById('notif-list');
+            if (!list) return;
+            try {
+                const { data, error } = await supabaseClient.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(15);
+                if (error) throw error;
+                if (!data || !data.length) { list.innerHTML = '<p class="p-4 text-sm text-gray-400">No notifications yet.</p>'; return; }
+                list.innerHTML = data.map(n => `
+                    <a href="${n.link || '#'}" onclick="markNotifRead('${n.id}')" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 ${!n.is_read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">${escNotif(n.title)}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">${escNotif(n.message)}</p>
+                        <p class="text-xs text-gray-400 mt-1">${notifTimeAgo(n.created_at)}</p>
+                    </a>`).join('');
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p class="p-4 text-sm text-red-500">Could not load notifications.</p>';
+            }
+        }
+        async function markNotifRead(id) {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', id);
+            refreshNotifBadge();
+        }
+        async function markAllNotifsRead() {
+            await supabaseClient.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('user_id', currentUser.id).eq('is_read', false);
+            await loadNotifications();
+            refreshNotifBadge();
+        }
+
+</script>
 </body>
 </html>
