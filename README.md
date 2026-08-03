@@ -88,6 +88,11 @@
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Welcome Back!</h2>
                 <p class="text-gray-600 dark:text-gray-400 mt-2">Login to your CastroEduConnect account</p>
             </div>
+
+            <div id="connection-diagnostic" class="hidden mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm">
+                <p class="font-semibold text-red-700 dark:text-red-400 mb-1"><i class="fas fa-triangle-exclamation mr-1"></i>Can't reach the database</p>
+                <p id="connection-diagnostic-detail" class="text-red-600 dark:text-red-400"></p>
+            </div>
             
             <!-- Login Form -->
             <form id="login-form" class="space-y-6">
@@ -197,6 +202,40 @@
         // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('✅ Supabase client initialized');
+
+        // ============================================
+        // CONNECTION SELF-TEST
+        // Runs once on page load so a broken setup shows a clear on-screen
+        // reason instead of the login button just silently doing nothing.
+        // ============================================
+        (async function connectionSelfTest() {
+            const banner = document.getElementById('connection-diagnostic');
+            const detail = document.getElementById('connection-diagnostic-detail');
+            try {
+                const { error } = await supabaseClient.from('system_settings').select('key').limit(1);
+                if (error) {
+                    let msg = error.message || 'Unknown error';
+                    if (/relation .* does not exist/i.test(msg) || /schema cache/i.test(msg)) {
+                        msg = 'The database schema hasn\'t been set up yet. Run supabase-schema.sql in your Supabase project\'s SQL Editor, then reload this page.';
+                    } else if (/JWT|api key|apikey/i.test(msg)) {
+                        msg = 'The Supabase URL/key in this page don\'t match a real project. Check SUPABASE_URL and SUPABASE_ANON_KEY near the top of the script.';
+                    } else if (/permission denied/i.test(msg)) {
+                        msg = 'The database rejected this request (permission denied). Re-run supabase-schema.sql — the RLS policies may be missing or wrong.';
+                    }
+                    detail.textContent = msg;
+                    banner.classList.remove('hidden');
+                    console.error('❌ Connection self-test failed:', error);
+                }
+            } catch (e) {
+                let msg = e.message || String(e);
+                if (/Failed to fetch|NetworkError/i.test(msg)) {
+                    msg = 'Could not reach the Supabase project at all. It may be paused (free projects pause after a week of inactivity — open your Supabase dashboard to wake it up), or SUPABASE_URL may be wrong.';
+                }
+                detail.textContent = msg;
+                banner.classList.remove('hidden');
+                console.error('❌ Connection self-test threw:', e);
+            }
+        })();
 
         // ============================================
         // TOGGLE PASSWORD VISIBILITY
